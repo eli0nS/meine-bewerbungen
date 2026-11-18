@@ -293,7 +293,7 @@ test('Codex writes and verifies the letter in separate local client calls',async
       const chunks=[];for await(const chunk of process.stdin) chunks.push(chunk);
       const input=Buffer.concat(chunks).toString();
       const reviewer=input.startsWith('ROLLE: Lebenslauf-Faktenprüfung');
-      if(args[args.indexOf('--model')+1]!=='gpt-6.2-sol'||!args.includes('model_reasoning_effort="'+(reviewer?'medium':'low')+'"'))process.exit(4);
+      if(args[args.indexOf('--model')+1]!=='gpt-6.2-sol'||!args.includes('model_reasoning_effort="medium"'))process.exit(4);
       if(!args.includes('shell_tool')||!args.includes('mcp_servers={}'))process.exit(3);
       await appendFile(${JSON.stringify(log)},reviewer?'audit\\n':'draft\\n');
       const data=reviewer?{accepted:true,summary:'Belegt.',issues:[]}:${JSON.stringify(exampleDraft)};

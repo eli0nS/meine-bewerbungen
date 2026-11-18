@@ -98,7 +98,8 @@ function render() {
   const docs=state.documents.filter(d=>d.kind==='cv');
   app.innerHTML=`<header class="masthead"><div class="masthead-inner">
     <a class="brand" href="/" data-page="overview"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>Meine Bewerbungen</a>
-    <nav aria-label="Hauptnavigation">${Object.entries(pageNames).map(([key,label])=>`<button type="button" data-page="${key}" ${page===key?'aria-current="page"':''}>${label}</button>`).join('')}</nav>
+    <button class="nav-toggle" type="button" aria-controls="main-nav" aria-expanded="false">Menü</button>
+    <nav id="main-nav" aria-label="Hauptnavigation">${Object.entries(pageNames).map(([key,label])=>`<button type="button" data-page="${key}" ${page===key?'aria-current="page"':''}>${label}</button>`).join('')}</nav>
     <span class="mode ${live()?'mode-live':'mode-demo'}">${live()?'Eigene Daten':'Beispielmodus'}</span>
   </div></header>
   <main id="main" class="${page==='overview'?'home':''}" tabindex="-1">${pageContent(docs)}</main>
@@ -116,18 +117,25 @@ function realAction(){
   if(state.entry?.live) return `<a class="button secondary" href="${esc(state.entry.live)}#unterlagen">Eigene Bewerbung vorbereiten ${arrow}</a>`;
   return route('connection','Eigene Bewerbung vorbereiten');
 }
+const stationery='<div class="stationery" aria-hidden="true"><div class="letter-sheet"><i class="paper-monogram">Aa</i><i class="paper-rule"></i><i class="paper-lines"></i><i class="paper-signature"></i></div><div class="paper-envelope"></div></div>';
 function pageContent(docs) {
   if(page==='documents') return documentsPage(docs);
   if(page==='template') return templatePage();
   if(page==='connection') return connectionPage();
   if(page==='applications') return applicationsPage();
-  return `<section class="intro">
-    <div class="intro-copy"><h1>Meine Bewerbungen</h1>
-      <p>${live()?(docs.length?'Dein Lebenslauf liegt bereit. Finde Stellen, die zu deiner Erfahrung passen.':'Hinterlege deinen Lebenslauf. Hier siehst du anschließend passende Stellen und die Erfahrung, die dich dafür qualifiziert.'):'Probiere den Weg von der ersten Stelle bis zur Portalbestätigung mit einer Beispielbewerbung aus.'}</p>
-      <div class="intro-actions">${live()?realAction()+demoAction([]):demoAction(docs)+realAction()}</div>
-      <p class="mode-note">${live()?'Deine Unterlagen werden auf diesem Gerät gespeichert.':'Der Beispielmodus verwendet fiktive Daten und ein lokales Testportal.'}</p>
-    </div><dl class="overview-counts"><div><dt>Zur Durchsicht</dt><dd>${state.jobs.filter(j=>['prepared','blocked'].includes(j.status)).length}</dd></div><div><dt>Versandt</dt><dd>${state.jobs.filter(j=>j.status==='sent').length}</dd></div></dl>
-  </section>
+  const pending=state.jobs.filter(j=>['prepared','blocked'].includes(j.status));
+  const next=pending[0];
+  return `<header class="workspace-heading"><h1>Meine Bewerbungen</h1>
+    ${state.jobs.length?`<dl class="workspace-counts"><div><dt>Zur Durchsicht</dt><dd>${pending.length}</dd></div><div><dt>Versandt</dt><dd>${state.jobs.filter(j=>j.status==='sent').length}</dd></div></dl>`:''}
+    </header>
+    <section class="focus-panel">${stationery}<div class="focus-copy">
+      ${next?`<div class="focus-company">${esc(next.employer)} · ${esc(labels[next.status])}</div><h2>${esc(next.title)}</h2>
+        <p>${next.status==='blocked'?esc(next.blocker||'Öffne die Bewerbung, um den aktuellen Stand zu prüfen.'):'Dein Entwurf liegt bereit. Hier kannst du das Anschreiben lesen und die Unterlagen prüfen.'}</p>
+        <button class="button primary" data-job="${next.id}">Bewerbung prüfen ${arrow}</button>`:
+      `<h2>${live()?(docs.length?'Passende Stellen finden':'Mit deinem Lebenslauf starten'):'Eine Bewerbung ausprobieren'}</h2>
+        <p>${live()?(docs.length?'Dein Lebenslauf ist hinterlegt. Suche nach Stellen, die zu deiner Erfahrung passen.':'Wähle deinen Lebenslauf als PDF. Zu jedem Stellenvorschlag siehst du, welche Erfahrung dafür spricht.'):'Suche eine Beispielstelle, lies das Anschreiben und teste den Versand im fiktiven Portal.'}</p>
+        <div class="intro-actions">${live()?realAction()+demoAction([]):demoAction(docs)+realAction()}</div>`}
+    </div></section>
   <div class="home-columns">
     <section class="recent"><div class="section-top"><h2>Letzte Bewerbungen</h2>${state.jobs.length?`<button class="text-button" data-page="applications">Alle ansehen ${arrow}</button>`:''}</div>
       ${state.jobs.length?jobRows(state.jobs.slice(0,4)):`<div class="record-empty"><p>Hier erscheinen deine Entwürfe und der Stand deiner Bewerbungen.</p>${route('applications',live()?'Zur Stellensuche':'Zur Beispielstelle')}</div>`}
@@ -150,13 +158,12 @@ function templatePage() {
   const sample=lastDocument('sample');
   const picker=`<label class="button ${sample?'secondary':'primary'} file-button">${sample?'PDF austauschen':'Muster-PDF auswählen'}<input id="sample-file" type="file" accept=".pdf,application/pdf" aria-describedby="sample-hint"></label>`;
   const previewLink=state.entry?.live?`<a class="button secondary" href="${esc(state.entry.live)}#schreibvorlage">Eigenes Muster hinzufügen ${arrow}</a>`:'';
-  return `${title('Schreibvorlage','Lege fest, woran sich neue Anschreiben orientieren.',route('applications','Weiter zur Stellenanzeige'))}
+  return `${title('Schreibvorlage','Hier bestimmst du den Ton deiner Anschreiben.',route('applications','Weiter zur Stellenanzeige'))}
     <div class="template-flow">
       <section class="panel sample-panel">
-        <div class="sample-heading"><span class="document-icon" aria-hidden="true"></span><div>
-          <h2>${live()?'Musteranschreiben':'Beispielvorlage'}</h2>
-          <p>${live()?'Wähle ein früheres Anschreiben, das gut zu dir passt. Die KI übernimmt Ton und Aufbau und schreibt für jede Stelle einen eigenen Entwurf.':'Im Beispielmodus ist eine fiktive Vorlage hinterlegt. Du kannst direkt zur Beispielstelle gehen.'}</p>
-        </div></div>
+        ${stationery}
+        <div class="sample-content"><h2>${live()?(sample?'Dein Musteranschreiben':'Ein Anschreiben von dir'):'Beispielvorlage'}</h2>
+          <p>${live()?(sample?'Diese PDF gibt Ton und Aufbau vor. Welche Erfahrungen im neuen Anschreiben stehen, entscheiden die Stelle und dein Lebenslauf.':'Wähle ein früheres Anschreiben, das nach dir klingt. Für jede Stelle entsteht daraus ein neuer Text mit passenden Erfahrungen aus deinem Lebenslauf.'):'So sieht ein hinterlegtes Muster aus. Für eigene Anschreiben kannst du eine PDF in deinem Arbeitsbereich auswählen.'}</p>
         ${live()?`
           ${sample?`<a class="document-tile active-sample" href="/api/documents/${sample.id}" download>
             <span class="pdf-symbol">PDF</span><div><strong>${esc(sample.name)}</strong><small>Aktive Vorlage · PDF herunterladen</small></div><span aria-hidden="true">↓</span>
@@ -164,7 +171,7 @@ function templatePage() {
           <div class="sample-actions">${picker}${sample?'<button id="remove-sample" class="text-button" type="button">Muster entfernen</button>':''}</div>
           <p class="hint" id="sample-hint">${sample?'Das Muster wird beim Erstellen eines Entwurfs nach deiner Bestätigung verwendet.':'PDF bis 8 MB mit auswählbarem Text. Eine Datei genügt.'}</p>
           <p class="notice warning" id="sample-error" role="alert" hidden></p>
-        `:previewLink}
+        `:previewLink}</div>
       </section>
       ${sample?'':`<details class="panel template-alternative" ${templateHelpOpen?'open':''}>
         <summary>${live()?'Ich habe kein Musteranschreiben':'Vorlage im Beispielmodus bearbeiten'}</summary>
@@ -407,6 +414,13 @@ function reviewBody(job){const locked=['sending','sent','unknown'].includes(job.
 }
 
 function bind(){
+  const menu=document.querySelector('.nav-toggle');
+  menu.onclick=()=>menu.setAttribute('aria-expanded',String(menu.getAttribute('aria-expanded')!=='true'));
+  menu.closest('header').onkeydown=event=>{
+    if(event.key==='Escape'&&menu.getAttribute('aria-expanded')==='true') {
+      menu.setAttribute('aria-expanded','false'); menu.focus();
+    }
+  };
   document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',event=>{event.preventDefault();navigate(el.dataset.page);}));
   document.querySelectorAll('[data-job]').forEach(el=>el.addEventListener('click',()=>{selected=el.dataset.job;tab='letter';navigate('applications');}));
   const tabs=[...document.querySelectorAll('[data-tab]')];

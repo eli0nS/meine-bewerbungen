@@ -2,116 +2,101 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Anleitung · Meine Bewerbungen</title>
   <link rel="stylesheet" href="./anleitung.css">
 </head>
 <body>
-<main>
-  <header>
-    <p>Meine Bewerbungen</p>
-    <h1>Anleitung</h1>
-    <p>Vom ersten Start bis zur bestätigten Bewerbung.</p>
-  </header>
-  <nav aria-label="Inhaltsverzeichnis">
-    <a href="#start">Starten</a>
-    <a href="#chat">Im Chat installieren</a>
-    <a href="#demo">Ausprobieren</a>
-    <a href="#einrichten">Einrichten</a>
-    <a href="#bewerben">Bewerben</a>
-    <a href="#daten">Daten und Kontingent</a>
-    <a href="#hilfe">Hilfe</a>
-  </nav>
-  <section id="start">
-    <h2>Starten</h2>
-    <ol>
-      <li>Entpacke <strong>das Projekt-ZIP</strong> vollständig in einen Ordner deiner Wahl.</li>
-      <li>Doppelklicke auf <strong>Start Windows</strong> oder <strong>Start macOS</strong>. Beim ersten Start lädt die App ihre Komponenten. Das kann einige Minuten dauern und braucht Internet.</li>
-      <li>Die Startseite öffnet sich automatisch in deinem Standardbrowser. Wenn du den Browsertab schließt, öffnet ein weiterer Doppelklick auf die Startdatei die laufende App wieder.</li>
-    </ol>
-    <p>Fehlt eine passende Node-Version, lädt der Starter sie ins Benutzerkonto und prüft die offizielle Prüfsumme. <a href="https://nodejs.org/de/download" rel="noreferrer">Offizieller Node.js-Download</a></p>
-    <p>Unter Windows wurde der Start aus einem entpackten Ordner mit Leerzeichen geprüft. Der Start auf macOS ist vorbereitet und noch ungeprüft.</p>
-    <figure><img src="./anleitung-bilder/start.png" alt="Startansicht von Meine Bewerbungen mit den Schaltflächen Mit Beispieldaten ausprobieren und Eigene Bewerbung vorbereiten." loading="lazy"><figcaption>Auf der Startseite wählst du den Beispielmodus oder deinen eigenen Arbeitsbereich.</figcaption></figure>
-  </section>
-  <section id="chat">
-    <h2>Aus einem lokalen Chat installieren</h2>
-    <p>Verwende Codex oder Claude Code mit Zugriff auf einen lokalen Projektordner. Sende den Repo-Link mit dieser Anweisung:</p>
-    <blockquote>Installiere Meine Bewerbungen aus diesem Repository. Klone das vollständige Projekt, lies die Einrichtung und öffne meinen eigenen Arbeitsbereich im Browser. Verwende die mitgelieferten Skills und vier Agentenrollen.</blockquote>
-    <p>Falls der Client nach dem Klonen im alten Ordner bleibt, öffne den geklonten Ordner als neues Projekt. In Claude Code rufst du <code>/meine-bewerbungen</code> auf. In Codex wählst du den Skill <code>$meine-bewerbungen</code>. Die App läuft in deinem Standardbrowser.</p>
-    <p>Du verwendest dein eigenes angemeldetes Codex- oder Claude-Code-Konto. Der Repo-Link enthält keine Konten, Schlüssel oder Bewerbungsdaten.</p>
-  </section>
-  <section id="demo">
-    <h2>Mit Beispieldaten ausprobieren</h2>
-    <ol>
-      <li>Klicke auf <strong>Mit Beispieldaten ausprobieren</strong>, dann auf <strong>Beispielstelle suchen</strong>.</li>
-      <li>Wähle <strong>Bewerbung vorbereiten</strong>. Anschreiben, Antworten und beide PDFs sind fiktiv und bereits ausgefüllt.</li>
-      <li>Klicke auf <strong>Prüfen &amp; freigeben</strong>. Bestätige diese Fassung und wähle <strong>Freigegebene Bewerbung absenden</strong>.</li>
-      <li><strong>Bestätigt versandt</strong> und <strong>Portalquittung ansehen</strong> zeigen den Eingang im lokalen Testportal. Für die Demo brauchst du kein KI-Konto.</li>
-    </ol>
-  </section>
-  <section id="einrichten">
-    <h2>Eigene Bewerbung vorbereiten</h2>
-    <h3>1. KI-Anbieter wählen</h3>
-    <p>Öffne <strong>KI-Anbieter</strong>. Unter <strong>KI-Anbieter</strong> stehen zwei Wege zur Verfügung.</p>
-    <dl>
-      <dt>Mit ChatGPT</dt>
-      <dd>Klicke bei Bedarf auf <strong>Codex installieren</strong> und dann auf <strong>Bei ChatGPT anmelden</strong>. Melde dich im von Codex geöffneten Browserfenster an. Klicke danach in der App auf <strong>Anmeldestatus prüfen</strong>. Wenn <strong>Angemeldet</strong> erscheint, gehst du weiter zu den Unterlagen. <a href="https://learn.chatgpt.com/docs/codex/cli" rel="noreferrer">Offizielle Codex-Anleitung</a></dd>
-      <dt>Mit Claude Code</dt>
-      <dd>Öffne dieses Projekt in Claude Code, melde dich dort mit deinem eigenen Konto an und wähle in der Browser-App <strong>Claude verwenden</strong>. Bei einer Stelle klickst du auf <strong>Auftrag für Claude Code erstellen</strong>. Starte dann <code>/meine-bewerbungen</code> in Claude Code und lass das Browserfenster offen. Claude Code übernimmt Schreiben und Faktenprüfung. Die Browser-App holt den fertigen Entwurf automatisch ab. <a href="https://code.claude.com/docs/en/setup" rel="noreferrer">Offizielle Claude-Code-Anleitung</a></dd>
-    </dl>
-    <figure><img src="./anleitung-bilder/anbieter.png" alt="Anbieterwahl mit ChatGPT-Anmeldung und lokaler Übergabe an Claude Code." loading="lazy"><figcaption>Die Wahl des Anbieters erfolgt in der App. Die Anmeldung bleibt im jeweiligen offiziellen Client.</figcaption></figure>
-    <h3>2. Lebenslauf und Profil</h3>
-    <p>Öffne <strong>Unterlagen</strong>, wähle bei <strong>Lebenslauf</strong> eine PDF und speichere im <strong>Profil</strong> mindestens Namen und E-Mail. Erfahrung, Verfügbarkeit und Suchkriterien kannst du ergänzen.</p>
-    <h3>3. Schreibvorlage</h3>
-    <p>Öffne <strong>Schreibvorlage</strong> und klicke auf <strong>Muster-PDF auswählen</strong>. Nimm ein früheres Anschreiben, dessen Ton zu dir passt. Steht der Dateiname unter <strong>Aktive Vorlage</strong>, kannst du zur Stellenanzeige weitergehen. <strong>PDF austauschen</strong> ersetzt das Muster für neue Entwürfe.</p>
-    <p>Hast du kein Muster, öffne <strong>Ich habe kein Musteranschreiben</strong>. Beantworte die Fragen nach einer passenden Aufgabe, deiner Motivation und dem gewünschten Ton. Klicke auf <strong>Vorlage aus meinen Antworten erstellen</strong>.</p>
-    <figure><img src="./anleitung-bilder/vorlage.png" alt="Schreibvorlage mit einer aktiven Beispiel-PDF, den Schaltflächen PDF austauschen und Muster entfernen und ohne Fragen." loading="lazy"><figcaption>Ein aktives PDF-Muster genügt. Die Fragen stehen nur zur Verfügung, solange kein Muster ausgewählt ist.</figcaption></figure>
-  </section>
-  <section id="bewerben">
-    <h2>Von der Stelle bis zur Quittung</h2>
-    <ol>
-      <li>Öffne <strong>Bewerbungen</strong> und wähle <strong>Stellen nach Lebenslauf suchen</strong>. Ort, Rollenfilter und weitere Greenhouse-Firmenlinks kannst du ergänzen. Die App durchsucht Greenhouse-Firmenportale, Ashby, Lever und Arbeitnow und vergleicht die Anzeigen lokal mit deinem Lebenslauf. Für öffentliche Jobbörsen und weitere Karriereseiten starte die zusätzliche Webrecherche mit deinem Projektchat. Wenn du eine konkrete Greenhouse-Stelle kennst, öffne <strong>Ich habe schon eine Stellenanzeige</strong> und füge den Link ein.</li>
-      <li>Klicke auf <strong>Bewerbung vorbereiten</strong> und lies, welche Angaben für den Entwurf verwendet werden. Bestätige erst danach die Erstellung oder den Export für Claude.</li>
-      <li>Prüfe <strong>Anschreiben</strong>, <strong>Antworten</strong>, <strong>Unterlagen</strong> und das Zielportal. Änderungen am Anschreiben speicherst du über <strong>Text &amp; PDF speichern</strong>. Ergänzte Pflichtangaben speicherst du über <strong>Antworten speichern</strong>.</li>
-      <li>Wähle <strong>Prüfen &amp; freigeben</strong>, hake die Bestätigung an und klicke auf <strong>Diese Fassung freigeben</strong>. Jede Bewerbung braucht ihre eigene Freigabe. Änderungen an der Fassung erfordern eine neue.</li>
-      <li>Klicke auf <strong>Freigegebene Bewerbung absenden</strong>. Öffne bei <strong>Bestätigt versandt</strong> die Portalquittung oder sieh unter <strong>Verlauf</strong> nach.</li>
-    </ol>
-    <h3>So arbeiten die vier Rollen</h3>
-    <dl>
-      <dt>Recherche</dt><dd>Lädt veröffentlichte Anzeigen und zeigt Überschneidungen zum Lebenslauf an.</dd>
-      <dt>Lebenslauf und Anschreiben</dt><dd>Analysiert die Stelle und wählt passende Aufgaben und Erfahrungen aus deinem Lebenslauf. Die Vorlage gibt Ton und Aufbau vor. Deine Original-PDF bleibt erhalten.</dd>
-      <dt>Faktenprüfung</dt><dd>Prüft Belege, Formulierungen und Formularantworten. Bei unbelegten Angaben oder verzerrten Aussagen hält die App den Entwurf an.</dd>
-      <dt>Portal</dt><dd>Füllt das freigegebene Formular aus, hängt beide PDFs an und löst den Versand aus. Automatisiert unterstützt sind Greenhouse-Formulare, deren Felder die App erkennt.</dd>
-    </dl>
-    <figure><img src="./anleitung-bilder/stellenvorschlag.png" alt="Eine fiktive Stelle bei Nordstern Systeme mit Überschneidungen zum Lebenslauf und der Schaltfläche Bewerbung vorbereiten." loading="lazy"><figcaption>Zu jedem Treffer siehst du Firma, Rolle und die Überschneidungen zum Lebenslauf.</figcaption></figure>
-    <figure><img src="./anleitung-bilder/entwurf.png" alt="Bewerbungsübersicht mit einer ausgewählten Beispielstelle, Faktenprüfung und geöffnetem Anschreiben." loading="lazy"><figcaption>Das Dashboard ordnet Anschreiben, Antworten, Unterlagen und Faktenprüfung der Stelle zu.</figcaption></figure>
-    <figure><img src="./anleitung-bilder/freigabe.png" alt="Freigabedialog mit Firma, Stelle, Formularantworten, PDF-Anlagen und Bestätigungsfeld." loading="lazy"><figcaption>Der Versand bleibt gesperrt, bis du die konkrete Fassung freigibst.</figcaption></figure>
-    <figure><img src="./anleitung-bilder/quittung.png" alt="Erfolgsanzeige mit der Bestätigung, dass die fiktive Bewerbung beim lokalen Testportal eingegangen ist." loading="lazy"><figcaption>Die Quittung aus dem Testportal zeigt, wie der bestätigte Eingang dargestellt wird.</figcaption></figure>
-    <p>Mit <strong>Übersicht als HTML speichern</strong> lädst du eine Momentaufnahme mit Firma, Stelle und Status herunter. Öffne sie per Doppelklick. Sie funktioniert ohne die App und aktualisiert sich beim erneuten Export.</p>
-  </section>
-  <section id="daten">
-    <h2>Daten und Kontingent</h2>
-    <p>Das Programm läuft auf deinem Gerät im Browser. Unterlagen, Entwürfe und der Verlauf liegen im Datenordner deines Benutzerkontos. Die Zugangsdaten bleiben bei Codex und Claude. Die App hat dafür kein eigenes Passwortfeld.</p>
-    <p>Für einen Entwurf verwenden die beiden KI-Rollen den aus Lebenslauf und Muster gelesenen Text, deinen Namen, ergänzte Hinweise sowie die öffentliche Anzeige und ihre fachlichen Fragen. Prüfe, welche Kontaktdaten im PDF-Text stehen. Die Bewerbungs-PDFs gehen an das Portal, wenn du den freigegebenen Versand startest.</p>
-    <p>Bei ChatGPT gilt das Kontingent der in Codex angemeldeten Person. Bei Claude Code gilt das Kontingent des dort angemeldeten Kontos. Beide Kontingente prüfst du beim jeweiligen Anbieter. Die lokale Quellensuche und HTML-Übersicht benötigen keinen Modellaufruf. Die zusätzliche Webrecherche läuft im angemeldeten Projektchat. <a href="https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan" rel="noreferrer">Codex-Nutzungslimits</a> · <a href="https://code.claude.com/docs/en/legal-and-compliance" rel="noreferrer">Claude-Anmeldebedingungen</a></p>
-  </section>
-  <section id="hilfe">
-    <h2>Wenn etwas hakt</h2>
-    <dl>
-      <dt>Browser öffnet sich nicht</dt>
-      <dd>Warte, bis das Startfenster eine Adresse anzeigt. Kopiere die Adresse in deinen Browser oder öffne die Startdatei erneut.</dd>
-      <dt>Codex meldet „Anmeldung erforderlich“ oder lehnt einen Entwurf ab</dt>
-      <dd>Melde dich erneut an und prüfe den Status. Prüfe bei einer Ablehnung auch Kontingent und Berechtigung deines gewählten ChatGPT-Arbeitsbereichs.</dd>
-      <dt>PDF lässt sich nicht lesen</dt>
-      <dd>Wähle eine PDF bis 8 MB mit auswählbarem Text und ohne Passwort. Für ein gescanntes Muster kannst du stattdessen die drei Fragen beantworten.</dd>
-      <dt>Link oder Formular wird nicht unterstützt</dt>
-      <dd>Nutze den direkten Link zu einer einzelnen Greenhouse-Stelle. Bei einem anderen Portal oder fehlendem Feld für das Anschreiben öffnest du die Online-Bewerbung der Firma.</dd>
-      <dt>Angehalten</dt>
-      <dd>Lies den Grund im Entwurf. Ein CAPTCHA, ein Login oder eine zusätzliche Einwilligung benötigt deine persönliche Prüfung.</dd>
-      <dt>Ausgang unklar</dt>
-      <dd>Prüfe die Eingangsbestätigung im Portal oder im Postfach, bevor du erneut absendest. Die App wiederholt den Versand in diesem Zustand nicht.</dd>
-    </dl>
-  </section>
+  <a class="skip" href="#anleitung">Zum Inhalt</a>
+  <aside><strong>Meine Bewerbungen</strong><nav aria-label="Kapitel"><a href="#im-chat-installieren">Im Chat installieren</a>
+<a href="#den-lebenslauf-hinterlegen">Den Lebenslauf hinterlegen</a>
+<a href="#passende-stellen-finden">Passende Stellen finden</a>
+<a href="#eine-schreibvorlage-wahlen">Eine Schreibvorlage wählen</a>
+<a href="#den-ki-anbieter-verbinden">Den KI-Anbieter verbinden</a>
+<a href="#einen-entwurf-prufen">Einen Entwurf prüfen</a>
+<a href="#freigeben-und-versenden">Freigeben und versenden</a>
+<a href="#ausprobieren-exportieren-und-hilfe-finden">Ausprobieren, exportieren und Hilfe finden</a></nav></aside>
+  <main><h1 id="anleitung">Anleitung</h1>
+<p>Vom ersten Start bis zur geprüften Bewerbung. Am Computer wechselst du links zwischen den Bereichen. Auf kleinen Bildschirmen öffnest du sie über <strong>Menü</strong>. <strong>Eigene Daten</strong> und <strong>Beispielmodus</strong> zeigen dir, in welchem Arbeitsbereich du bist. Alle Bilder in dieser Anleitung stammen aus einer getrennten Installation mit fiktiven Daten.</p>
+<h2 id="im-chat-installieren">Im Chat installieren</h2>
+<p>Teile die <a href="https://github.com/eli0nS/meine-bewerbungen/blob/main/INSTALL.md">Installationsseite</a> mit einem lokalen Codex- oder Claude-Code-Chat und schreibe „Installiere diese App und öffne sie im Browser.“ Der Chat richtet das Projekt und seine vier Rollen ein. Falls dein Client nach einer Anmeldung oder dem Zugriff auf den Projektordner fragt, bestätigst du das selbst.</p>
+<p>Du kannst das Projekt auch als ZIP entpacken und <strong>Start Windows</strong> oder <strong>Start macOS</strong> öffnen. Beim ersten Start braucht das Setup Internet. Ein weiterer Start öffnet die laufende App erneut. Die Anleitung lässt sich auch bei geschlossener App als <strong>web/anleitung.html</strong> öffnen.</p>
+<p><img src="./anleitung-bilder/start.png" alt="Persönliche Startseite mit der Aktion Lebenslauf hinzufügen und einem Zugang zum Beispielmodus" /></p>
+<h2 id="den-lebenslauf-hinterlegen">Den Lebenslauf hinterlegen</h2>
+<ol>
+<li>Klicke auf der Startseite auf <strong>Lebenslauf hinzufügen</strong>. Unter <strong>Unterlagen → PDF auswählen</strong> wählst du deinen Lebenslauf. Verwende eine PDF mit auswählbarem Text, ohne Passwort, bis 8 MB.</li>
+<li>Sobald der Dateiname erscheint, kannst du <strong>Jetzt Stellen finden</strong> wählen. Für die Suche genügt der Lebenslauf.</li>
+<li>Für einen Entwurf trägst du unter <strong>Profil</strong> mindestens deinen Namen und deine E-Mail ein und klickst auf <strong>Profil lokal speichern</strong>. Hier kannst du auch Verfügbarkeit, belegte Erfahrung und Wünsche für deine Bewerbung ergänzen.</li>
+</ol>
+<p><img src="./anleitung-bilder/unterlagen.png" alt="Unterlagen mit fiktiver Lebenslauf-PDF, Profilfeldern und der Aktion Jetzt Stellen finden" /></p>
+<h2 id="passende-stellen-finden">Passende Stellen finden</h2>
+<p>Unter <strong>Bewerbungen</strong> startet <strong>Stellen nach Lebenslauf suchen</strong> die lokale Suche. Die App lädt öffentliche Anzeigen von Greenhouse-Firmenportalen, Arbeitnow, Lever und Ashby. Ort und Stichwörter grenzen die Treffer weiter ein. Über <strong>Ich habe schon eine Stellenanzeige</strong> kannst du den direkten Link zu einer einzelnen Greenhouse-Stelle prüfen.</p>
+<p><img src="./anleitung-bilder/stellensuche.png" alt="Suchansicht nach dem Hinterlegen des Lebenslaufs mit Ortsfilter, Rollenfilter und Suche" /></p>
+<p>Für zusätzliche Quellen öffnest du <strong>Weitere Jobbörsen und Karriereseiten durchsuchen</strong> und wählst <strong>Webrecherche starten</strong>. Der Projektchat erhält Fachgebiete aus deinem Lebenslauf und den eingegebenen Suchort. Lass ihn nach öffentlich erreichbaren Einzelanzeigen suchen, etwa auf Stepstone, Indeed, LinkedIn oder Unternehmensseiten. Falls der Chat auf deinen Auftrag wartet, starte dort den Projekt-Skill <code>$meine-bewerbungen</code> in Codex oder <code>/meine-bewerbungen</code> in Claude Code. Die App prüft die zurückgegebenen Treffer lokal gegen deinen Lebenslauf.</p>
+<p>Lies bei jedem Vorschlag Firma, Aufgaben und Überschneidungen mit deinem Lebenslauf. <strong>Originalanzeige öffnen</strong> führt zur Quelle. <strong>Portalversand verfügbar</strong> kennzeichnet ein unterstütztes Greenhouse-Ziel. Bei <strong>Persönlicher Versand</strong> kannst du den Entwurf vorbereiten und selbst beim Arbeitgeber einreichen.</p>
+<p><img src="./anleitung-bilder/stellenvorschlag.png" alt="Ein fiktiver Treffer mit Firma, Aufgaben und Überschneidungen zum Lebenslauf" /></p>
+<h2 id="eine-schreibvorlage-wahlen">Eine Schreibvorlage wählen</h2>
+<p>Öffne <strong>Schreibvorlage → Muster-PDF auswählen</strong>. Nimm ein früheres Anschreiben, dessen Ton zu dir passt. Der Dateiname und <strong>Aktive Vorlage · PDF herunterladen</strong> zeigen, welches Muster für neue Entwürfe gilt. Mit <strong>PDF austauschen</strong> wechselst du die Vorlage.</p>
+<p>Hast du kein Muster, kannst du <strong>Ich habe kein Musteranschreiben</strong> öffnen. Drei Fragen helfen dir, eigene Schreibhinweise zu formulieren. Sobald eine PDF aktiv ist, verschwinden diese Fragen. Die Vorlage ist optional. Die fachlichen Aussagen im Anschreiben müssen durch deinen Lebenslauf oder deine bestätigten Angaben belegt sein.</p>
+<p><img src="./anleitung-bilder/vorlage.png" alt="Schreibvorlage mit Briefillustration, aktivem Musteranschreiben und PDF austauschen" /></p>
+<h2 id="den-ki-anbieter-verbinden">Den KI-Anbieter verbinden</h2>
+<p>Der Chat-Starter wählt bei einem neuen Arbeitsbereich den verwendeten Client. Unter <strong>KI-Anbieter</strong> kannst du die Auswahl prüfen oder ändern.</p>
+<ul>
+<li><strong>Codex mit ChatGPT.</strong> Falls nötig wählst du <strong>Codex installieren</strong>, dann <strong>Bei ChatGPT anmelden</strong>. Nach der offiziellen Anmeldung klickst du auf <strong>Anmeldestatus prüfen</strong>. Wähle <strong>ChatGPT verwenden</strong> oder, beim bereits ausgewählten Anbieter, <strong>Weiter zu Unterlagen</strong>.</li>
+<li><strong>Claude Code.</strong> Verwende den lokal geöffneten Projektchat mit deinem angemeldeten Claude-Konto. Wähle in der App <strong>Claude verwenden</strong> oder <strong>Weiter zu Unterlagen</strong>. Sobald du einen Entwurf beauftragst, verarbeitet der Projektchat die dafür freigegebenen Daten.</li>
+</ul>
+<p><img src="./anleitung-bilder/anbieter.png" alt="Anbieterwahl mit Anmeldestatus und den jeweils verfügbaren Aktionen" /></p>
+<table>
+<thead>
+<tr>
+<th>Rolle</th>
+<th>Codex</th>
+<th>Claude Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Webrecherche</td>
+<td>GPT-6 Luna · hoch</td>
+<td>Haiku · hoch</td>
+</tr>
+<tr>
+<td>Anschreiben</td>
+<td>GPT-6.2 Sol · mittel</td>
+<td>Haiku · hoch</td>
+</tr>
+<tr>
+<td>Faktenprüfung</td>
+<td>GPT-6.2 Sol · mittel</td>
+<td>Sonnet · mittel</td>
+</tr>
+<tr>
+<td>Portalfragen im Chat</td>
+<td>GPT-6 Luna · hoch</td>
+<td>Haiku · hoch</td>
+</tr>
+</tbody>
+</table>
+<p>Die gewöhnliche Quellensuche, der lokale Abgleich und der freigegebene Formularversand laufen ohne Modell. Für Webrecherche und Entwürfe gilt das Kontingent des jeweiligen Clients.</p>
+<h2 id="einen-entwurf-prufen">Einen Entwurf prüfen</h2>
+<ol>
+<li>Wähle beim Treffer <strong>Bewerbung vorbereiten</strong>. Lies, welche Angaben der Anbieter verarbeiten soll, und bestätige die Erstellung. Bei Codex klickst du auf <strong>Entwurf mit ChatGPT erstellen</strong>. Bei Claude wählst du <strong>Auftrag für Claude Code erstellen</strong> und startest im Projektchat <code>/meine-bewerbungen</code>. Die App übernimmt den geprüften Entwurf.</li>
+<li>Auf der Startseite öffnet <strong>Bewerbung prüfen</strong> den angezeigten Entwurf. Unter <strong>Bewerbungen</strong> findest du alle vorbereiteten Stellen. Öffne <strong>Faktenprüfung anzeigen</strong>, um das Ergebnis der unabhängigen Prüfung zu lesen.</li>
+<li>Prüfe <strong>Anschreiben</strong>, <strong>Antworten</strong>, <strong>Unterlagen</strong> und <strong>Zielportal</strong>. Speichere Textänderungen mit <strong>Text &amp; PDF speichern</strong> und geänderte Formularangaben mit <strong>Antworten speichern</strong>. Eine Änderung hebt eine bestehende Freigabe auf.</li>
+</ol>
+<p><img src="./anleitung-bilder/entwurf.png" alt="Eine ausgewählte Beispielbewerbung mit Faktenprüfung und Anschreiben" /></p>
+<h2 id="freigeben-und-versenden">Freigeben und versenden</h2>
+<p>Beim unterstützten Portal klickst du auf <strong>Prüfen &amp; freigeben</strong>. Im Dialog siehst du die konkrete Stelle, Antworten und Dateien. Öffne beide PDFs. Wenn alles stimmt, setze das Häkchen und wähle <strong>Diese Fassung freigeben</strong>. Erst <strong>Freigegebene Bewerbung absenden</strong> löst den Portalversand aus.</p>
+<p><img src="./anleitung-bilder/freigabe.png" alt="Freigabedialog für eine einzelne fiktive Bewerbung" /></p>
+<p>Bei <strong>Bestätigt versandt</strong> kannst du die Portalquittung öffnen. Bei <strong>Angehalten</strong> liest du den Grund im Entwurf. Bei <strong>Ausgang unklar</strong> prüfst du den Eingang im Portal oder Postfach. Die App löst in diesem Zustand keinen zweiten Versuch aus.</p>
+<p><img src="./anleitung-bilder/quittung.png" alt="Bestätigter Eingang im lokalen Testportal mit Link zur Quittung" /></p>
+<h2 id="ausprobieren-exportieren-und-hilfe-finden">Ausprobieren, exportieren und Hilfe finden</h2>
+<ul>
+<li><strong>Beispielmodus.</strong> Wähle auf der persönlichen Startseite <strong>Mit Beispieldaten ausprobieren</strong>. Im Beispielbereich lädst du über die gleichnamige Schaltfläche die fiktiven Daten und wählst <strong>Beispielstelle suchen</strong>. Hier kannst du den gesamten Weg bis zur simulierten Quittung ausprobieren.</li>
+<li><strong>Übersicht mitnehmen.</strong> Unter <strong>Bewerbungen → Übersicht als HTML speichern</strong> erhältst du eine offline lesbare Momentaufnahme mit Firma, Stelle und Status. Ein neuer Export erfasst spätere Änderungen.</li>
+<li><strong>Anmeldung oder Kontingent.</strong> Prüfe den Status im gewählten Client. Für einen gescannten Lebenslauf exportiere eine PDF mit Text oder führe vorher eine Texterkennung durch. Muss ein Portal eine zusätzliche Einwilligung, Anmeldung oder ein CAPTCHA prüfen, steht der Grund in der Bewerbung.</li>
+</ul>
+<p>Originaldokumente und Verlauf liegen im lokalen Datenordner deines Betriebssystemkontos. Beim Erstellen eines Entwurfs verarbeitet der gewählte Anbieter die freigegebenen Texte. Die PDFs gehen beim freigegebenen Versand an das Portal.</p>
 </main>
 </body>
 </html>

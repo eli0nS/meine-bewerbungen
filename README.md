@@ -2,7 +2,7 @@
 
 Finde Stellen, die zu deinem Lebenslauf passen. Lies zu jedem Vorschlag, welche Erfahrung dafür spricht. Anschreiben, Belege, Antworten und PDFs stehen pro Stelle zusammen in deinem lokalen Arbeitsbereich.
 
-![Dashboard mit einer vorbereiteten Beispielbewerbung zur Durchsicht](web/anleitung-bilder/dashboard.png)
+![Dashboard mit einer vorbereiteten Beispielbewerbung zur Durchsicht](web/anleitung-bilder/bewerbungsuebersicht.png)
 
 ## Im Chat starten
 
@@ -21,10 +21,10 @@ Teile den **[Installationslink](INSTALL.md)** mit einem lokalen Codex- oder Clau
 
 | Rolle | Codex | Claude Code | Einsatz |
 | --- | --- | --- | --- |
-| Recherche | GPT-6 Luna · niedrig | Haiku · niedrig | Öffentliche Webrecherche im Projektchat. Der normale Quellenabruf und der Lebenslaufabgleich laufen lokal ohne Modell. |
-| Anschreiben | GPT-6.2 Sol · niedrig | Haiku · niedrig | Ein Entwurf für eine ausgewählte Stelle mit Belegstellen. |
+| Recherche | GPT-6 Luna · hoch | Haiku · hoch | Öffentliche Webrecherche im Projektchat. Der normale Quellenabruf und der Lebenslaufabgleich laufen lokal ohne Modell. |
+| Anschreiben | GPT-6.2 Sol · mittel | Haiku · hoch | Ein Entwurf für eine ausgewählte Stelle mit Belegstellen. |
 | Faktenprüfung | GPT-6.2 Sol · mittel | Sonnet · mittel | Eigener Durchgang für Qualifikationen, Zeiträume und Formularantworten. |
-| Portal | GPT-6 Luna · niedrig | Haiku · niedrig | Nur bei Erläuterungen im Chat. Das freigegebene Formular füllt die App ohne Modell aus. |
+| Portal | GPT-6 Luna · hoch | Haiku · hoch | Nur bei Erläuterungen im Chat. Das freigegebene Formular füllt die App ohne Modell aus. |
 
 Die Modellwahl ist auf kurze, getrennte Aufgaben abgestimmt. Lokale Suche und Portalversand verbrauchen keine Modelltokens. Die Webrecherche liefert bis zu zehn geprüfte Vorschläge je Auftrag. Für den Entwurf wird nur die ausgewählte Anzeige übergeben.
 
@@ -33,3 +33,5 @@ Claude Pro enthält Claude Code und kostet bei monatlicher Zahlung laut Anbieter
 ## Ausprobieren und prüfen
 
 Der Beispielmodus verwendet fiktive Personen und ein lokales Testportal. Die Anleitung zeigt diesen Ablauf bis zur Quittung. Für Entwicklungstests mit Node.js 24 oder neuer: `npm ci`, `npx playwright install chromium`, `npm test`. Der Windows-Start und der lokale Testversand sind geprüft. Der Systemstart auf macOS und Linux sowie echte Portalübermittlungen sind unbestätigt.
+
+Bei Änderungen an der Oberfläche erzeugt `node tools/capture-guide.mjs` die Screenshots in einer temporären Installation mit fiktiven Daten. Die GitHub-Anleitung ist die Textquelle für die Offline-Hilfe. Nach dem Bearbeiten von [docs/ANLEITUNG.md](docs/ANLEITUNG.md) aktualisiert `pwsh -File tools/build-guide.ps1` die fertige HTML-Datei. Die installierte App kann sie direkt öffnen.

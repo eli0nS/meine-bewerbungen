@@ -166,7 +166,7 @@ async function codexResult(role,instructions,validation,data,effort) {
 
 export async function generateDraft(context,onReview) {
   const {roles}=await nativePacket(context);
-  const draft=await codexResult('Lebenslauf und Anschreiben',roles.write,draftSchema,context,'low');
+  const draft=await codexResult('Lebenslauf und Anschreiben',roles.write,draftSchema,context,'medium');
   if(!draft.suitable) return {draft,audit:null};
   assertDraftEvidence(context,draft);
   onReview();

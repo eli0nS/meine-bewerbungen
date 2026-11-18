@@ -27,21 +27,32 @@ try {
   await start('demo');
   const live=await start('live');
   live.store.addDocument('Musteranschreiben_Beispiel.pdf','sample',await makePdf('Fiktives Musteranschreiben','Ich plane Messreihen und entwickle wiederverwendbare Prüfaufbauten.'));
-  const context=await browser.newContext({viewport:{width:1180,height:920},deviceScaleFactor:1});
+  const context=await browser.newContext({viewport:{width:1180,height:920},deviceScaleFactor:1,reducedMotion:'reduce'});
   const page=await context.newPage();
   const capture=(selector,name)=>page.locator(selector).screenshot({path:join(assets,name+'.png')});
-  await page.goto(entry.demo);
+  await page.goto(entry.live);
   await page.getByRole('heading',{name:'Meine Bewerbungen',exact:true}).waitFor();
   await page.screenshot({path:join(assets,'start.png')});
+  await page.getByRole('button',{name:'Lebenslauf hinzufügen'}).click();
+  await page.getByLabel('PDF auswählen').setInputFiles({
+    name:'Lebenslauf_Beispiel.pdf',mimeType:'application/pdf',
+    buffer:Buffer.from(await makePdf('Fiktiver Lebenslauf','Ich plane Messreihen und entwickle Prüfaufbauten.'))
+  });
+  await page.getByRole('button',{name:'Jetzt Stellen finden'}).waitFor();
+  await page.locator('#toast.show').waitFor({state:'hidden'});
+  await page.screenshot({path:join(assets,'unterlagen.png')});
+  await page.getByRole('button',{name:'Jetzt Stellen finden'}).click();
+  await page.getByRole('button',{name:'Stellen nach Lebenslauf suchen'}).waitFor();
+  await page.screenshot({path:join(assets,'stellensuche.png')});
   await context.route('**/api/providers/codex',route=>route.fulfill({json:{status:'signed_out',help:'Melde dich im Browser mit deinem ChatGPT-Konto an.',installUrl:'https://learn.chatgpt.com/docs/codex/cli'}}));
   await context.route('**/api/providers/claude',route=>route.fulfill({json:{status:'manual',help:'Öffne dieses Repo in Claude Code und nutze /meine-bewerbungen. Die Anmeldung läuft in Claude Code.',installUrl:'https://code.claude.com/docs/en/setup'}}));
   await page.goto(entry.live+'/#anbieter');
   await page.getByRole('button',{name:/Bei ChatGPT anmelden/}).waitFor();
   await page.getByRole('button',{name:/Claude verwenden/}).waitFor();
-  await capture('.provider-grid','anbieter');
+  await page.screenshot({path:join(assets,'anbieter.png')});
   await page.goto(entry.live+'/#schreibvorlage');
   await page.getByText('Aktive Vorlage · PDF herunterladen',{exact:true}).waitFor();
-  await capture('.sample-panel','vorlage');
+  await page.screenshot({path:join(assets,'vorlage.png')});
   await page.goto(entry.demo);
   await page.getByRole('button',{name:/Mit Beispieldaten ausprobieren/}).click();
   await page.getByRole('button',{name:/Beispielstelle suchen/}).click();
@@ -50,14 +61,12 @@ try {
   await page.getByRole('button',{name:/Bewerbung vorbereiten/}).click();
   await page.getByText('Faktenprüfung anzeigen',{exact:true}).click();
   await page.getByRole('navigation').getByRole('button',{name:'Start',exact:true}).click();
-  await page.screenshot({path:join(assets,'dashboard.png')});
+  await page.locator('#toast.show').waitFor({state:'hidden'});
+  await page.screenshot({path:join(assets,'bewerbungsuebersicht.png')});
   await page.getByRole('navigation').getByRole('button',{name:'Bewerbungen',exact:true}).click();
   await page.getByText('Faktenprüfung anzeigen',{exact:true}).click();
   await page.locator('.review-layout').evaluate(node=>node.scrollIntoView({block:'start'}));
-  const block=await page.locator('.review-layout').boundingBox();
-  await page.screenshot({path:join(assets,'entwurf.png'),clip:{
-    x:block.x,y:Math.max(block.y,0),width:block.width,height:Math.min(510,920-Math.max(block.y,0))
-  }});
+  await page.screenshot({path:join(assets,'entwurf.png')});
   await page.getByRole('button',{name:/Prüfen & freigeben/}).click();
   await capture('#review-dialog','freigabe');
   await page.getByRole('checkbox').check();
