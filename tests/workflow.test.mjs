@@ -388,3 +388,36 @@ test('Research opens only after CV upload and accepts only matches for that same
     assert.equal((await env.request('/research/'+id,{},'GET')).status,400);
   } finally {await env.close();}
 });
+
+test('Home accepts a dropped CV and opens the selected letter for review', async()=>{
+  const env=await setup('success','live');
+  const browser=await chromium.launch({headless:true});
+  try {
+    const page=await browser.newPage({viewport:{width:320,height:780}});
+    await page.goto(env.base);
+    const drop=page.locator('#cv-drop');
+    await drop.waitFor();
+    const pdf=await makePdf('Beispiel','Ich entwickle Prüfaufbauten.');
+    await drop.evaluate((node,bytes)=>{
+      const transfer=new DataTransfer();
+      transfer.items.add(new File([new Uint8Array(bytes)],'Beispiel.pdf',{type:'application/pdf'}));
+      node.dispatchEvent(new DragEvent('drop',{bubbles:true,dataTransfer:transfer}));
+    },Array.from(pdf));
+    await page.getByRole('link',{name:/Beispiel.pdf/}).waitFor();
+
+    const fixture=env.runtime.store.read();
+    fixture.jobs=['Nord','West'].map(id=>({id,title:'Stelle '+id,employer:'Beispielfirma '+id,
+      source:{region:'external'},target:'https://example.invalid/jobs/'+id,
+      status:'prepared',location:'Beispielstadt',revision:1,letter:'Anschreiben für '+id,attachments:[],answers:[]}));
+    env.runtime.store.save(fixture);
+    await page.goto(env.base);
+    await page.getByRole('button',{name:/Beispielfirma West/}).click();
+    assert.equal(await page.locator('.reader-text').textContent(),'Anschreiben für West');
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+    await page.getByRole('button',{name:'Bewerbung prüfen',exact:true}).click();
+    assert.equal(await page.locator('#letter-text').inputValue(),'Anschreiben für West');
+    await page.goto(env.base);
+    await page.getByRole('button',{name:'Zur Stellensuche'}).click();
+    await page.getByRole('button',{name:'Stellen nach Lebenslauf suchen'}).waitFor();
+  } finally { await browser.close(); await env.close(); }
+});

@@ -33,8 +33,7 @@ try {
   await page.goto(entry.live);
   await page.getByRole('heading',{name:'Meine Bewerbungen',exact:true}).waitFor();
   await page.screenshot({path:join(assets,'start.png')});
-  await page.getByRole('button',{name:'Lebenslauf hinzufügen'}).click();
-  await page.getByLabel('PDF auswählen').setInputFiles({
+  await page.getByLabel('Datei auswählen').setInputFiles({
     name:'Lebenslauf_Beispiel.pdf',mimeType:'application/pdf',
     buffer:Buffer.from(await makePdf('Fiktiver Lebenslauf','Ich plane Messreihen und entwickle Prüfaufbauten.'))
   });
@@ -62,7 +61,7 @@ try {
   await page.getByText('Faktenprüfung anzeigen',{exact:true}).click();
   await page.getByRole('navigation').getByRole('button',{name:'Start',exact:true}).click();
   await page.locator('#toast.show').waitFor({state:'hidden'});
-  await page.screenshot({path:join(assets,'bewerbungsuebersicht.png')});
+  await page.screenshot({path:join(assets,'bewerbungsuebersicht.png'),fullPage:true});
   await page.getByRole('navigation').getByRole('button',{name:'Bewerbungen',exact:true}).click();
   await page.getByText('Faktenprüfung anzeigen',{exact:true}).click();
   await page.locator('.review-layout').evaluate(node=>node.scrollIntoView({block:'start'}));

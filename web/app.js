@@ -53,7 +53,8 @@ async function refresh() {
 function navigate(next) {
   page=next;
   render();
-  document.querySelector('#main').focus();
+  document.querySelector('#main').focus({preventScroll:true});
+  window.scrollTo(0,0);
   if(page==='connection' && live()) checkProviders();
 }
 window.addEventListener('hashchange',()=>{
@@ -117,37 +118,45 @@ function realAction(){
   if(state.entry?.live) return `<a class="button secondary" href="${esc(state.entry.live)}#unterlagen">Eigene Bewerbung vorbereiten ${arrow}</a>`;
   return route('connection','Eigene Bewerbung vorbereiten');
 }
-const stationery='<div class="stationery" aria-hidden="true"><div class="letter-sheet"><i class="paper-monogram">Aa</i><i class="paper-rule"></i><i class="paper-lines"></i><i class="paper-signature"></i></div><div class="paper-envelope"></div></div>';
 function pageContent(docs) {
   if(page==='documents') return documentsPage(docs);
   if(page==='template') return templatePage();
   if(page==='connection') return connectionPage();
   if(page==='applications') return applicationsPage();
-  const pending=state.jobs.filter(j=>['prepared','blocked'].includes(j.status));
-  const next=pending[0];
-  return `<header class="workspace-heading"><h1>Meine Bewerbungen</h1>
-    ${state.jobs.length?`<dl class="workspace-counts"><div><dt>Zur Durchsicht</dt><dd>${pending.length}</dd></div><div><dt>Versandt</dt><dd>${state.jobs.filter(j=>j.status==='sent').length}</dd></div></dl>`:''}
-    </header>
-    <section class="focus-panel">${stationery}<div class="focus-copy">
-      ${next?`<div class="focus-company">${esc(next.employer)} · ${esc(labels[next.status])}</div><h2>${esc(next.title)}</h2>
-        <p>${next.status==='blocked'?esc(next.blocker||'Öffne die Bewerbung, um den aktuellen Stand zu prüfen.'):'Dein Entwurf liegt bereit. Hier kannst du das Anschreiben lesen und die Unterlagen prüfen.'}</p>
-        <button class="button primary" data-job="${next.id}">Bewerbung prüfen ${arrow}</button>`:
-      `<h2>${live()?(docs.length?'Passende Stellen finden':'Mit deinem Lebenslauf starten'):'Eine Bewerbung ausprobieren'}</h2>
-        <p>${live()?(docs.length?'Dein Lebenslauf ist hinterlegt. Suche nach Stellen, die zu deiner Erfahrung passen.':'Wähle deinen Lebenslauf als PDF. Zu jedem Stellenvorschlag siehst du, welche Erfahrung dafür spricht.'):'Suche eine Beispielstelle, lies das Anschreiben und teste den Versand im fiktiven Portal.'}</p>
-        <div class="intro-actions">${live()?realAction()+demoAction([]):demoAction(docs)+realAction()}</div>`}
-    </div></section>
-  <div class="home-columns">
-    <section class="recent"><div class="section-top"><h2>Letzte Bewerbungen</h2>${state.jobs.length?`<button class="text-button" data-page="applications">Alle ansehen ${arrow}</button>`:''}</div>
-      ${state.jobs.length?jobRows(state.jobs.slice(0,4)):`<div class="record-empty"><p>Hier erscheinen deine Entwürfe und der Stand deiner Bewerbungen.</p>${route('applications',live()?'Zur Stellensuche':'Zur Beispielstelle')}</div>`}
+  if(state.jobs.length) return inboxPage();
+
+  const cv=lastDocument('cv');
+  const sample=lastDocument('sample');
+  return `<header class="workspace-heading"><h1>Meine Bewerbungen</h1></header>
+    <div class="intake">
+      <section class="intake-main">
+        <h2>${live()?(cv?'Passende Stellen finden':'Deinen Lebenslauf hinzufügen'):'Eine Bewerbung ausprobieren'}</h2>
+        <p>${live()?(cv?'Dein Lebenslauf liegt bereit. Suche nach Stellen, die zu deiner Erfahrung passen.':'Aus deinem Lebenslauf ermitteln wir, welche Stellen zu deiner Erfahrung passen.'):'Probier die Stellensuche, das Anschreiben und die Freigabe mit einer fiktiven Bewerbung aus.'}</p>
+        ${live()&&!cv?`<div id="cv-drop" class="cv-drop"><span class="file-glyph" aria-hidden="true">PDF</span>
+          <strong>Lebenslauf hierher ziehen</strong><span id="file-limits">PDF mit auswählbarem Text · bis 8 MB</span>
+          <label class="button primary file-button">Datei auswählen<input id="cv-file" type="file" accept=".pdf,application/pdf" aria-describedby="file-limits"></label>
+        </div>`:`<div class="intake-action">${live()?realAction():demoAction(docs)}</div>`}
+      </section>
+      <aside class="intake-files"><h2>Deine Unterlagen</h2>
+        <dl><div><dt>Lebenslauf</dt><dd>${cv?esc(cv.name):'Noch nicht hinterlegt'}</dd></div>
+        <div><dt>Schreibvorlage</dt><dd>${sample?esc(sample.name):'Optional'}</dd></div></dl>
+        <button type="button" data-page="template" class="text-button">${sample?'Schreibvorlage ansehen':'Eigenes Muster hinzufügen'} ${arrow}</button>
+      </aside>
+    </div><div class="mode-link">${live()?demoAction([]):realAction()}</div>`;
+}
+function inboxPage(){
+  const job=current()||state.jobs[0];
+  const letter=job.letter||'Für diese Bewerbung ist noch kein Anschreiben hinterlegt.';
+  return `<header class="workspace-heading"><h1>Meine Bewerbungen</h1><button class="button secondary" type="button" id="open-search">Zur Stellensuche ${arrow}</button></header>
+    <div class="inbox"><section class="inbox-list" aria-label="Stellenauswahl">
+      <h2>Bewerbungen <span>${state.jobs.length}</span></h2>
+      ${state.jobs.map(j=>`<button class="inbox-item" data-preview-job="${esc(j.id)}" aria-pressed="${j.id===job.id}">
+          <small>${esc(j.employer)}</small><strong>${esc(j.title)}</strong><span>${esc(labels[j.status])}</span></button>`).join('')}
     </section>
-    <section class="setup"><h2>So gehst du vor</h2><ol>
-      <li><button data-page="documents">Lebenslauf und Profil hinterlegen ${arrow}</button></li>
-      <li><button data-page="applications">Passende Stellen finden ${arrow}</button></li>
-      <li><button data-page="connection">KI für den Entwurf wählen ${arrow}</button></li>
-      <li><button data-page="template">Schreibvorlage hinzufügen ${arrow}</button></li>
-      <li><button data-page="applications">Anzeige übernehmen und Entwurf prüfen ${arrow}</button></li>
-    </ol></section>
-  </div>`;
+    <article class="inbox-reader" id="preview-letter" tabindex="-1"><header>
+      <div class="reader-source">${esc(job.employer)}${job.location?' · '+esc(job.location):''}</div><h2>${esc(job.title)}</h2>
+      <div class="reader-tools">${badge(job.status)}<button class="button primary" data-job="${esc(job.id)}">Bewerbung prüfen</button></div>
+    </header><h3>Anschreiben</h3><div class="reader-text">${esc(letter)}</div></article></div>`;
 }
 function empty(heading,text,button,nav){return `<div class="empty"><h3>${heading}</h3><p>${text}</p>${button?route(nav,button):''}</div>`;}
 function documentsPage(docs){return `${title('Unterlagen','Hinterlege deinen Lebenslauf und die Angaben für Bewerbungsformulare.',docs.length?route('applications','Jetzt Stellen finden','primary'):'')}
@@ -161,7 +170,6 @@ function templatePage() {
   return `${title('Schreibvorlage','Hier bestimmst du den Ton deiner Anschreiben.',route('applications','Weiter zur Stellenanzeige'))}
     <div class="template-flow">
       <section class="panel sample-panel">
-        ${stationery}
         <div class="sample-content"><h2>${live()?(sample?'Dein Musteranschreiben':'Ein Anschreiben von dir'):'Beispielvorlage'}</h2>
           <p>${live()?(sample?'Diese PDF gibt Ton und Aufbau vor. Welche Erfahrungen im neuen Anschreiben stehen, entscheiden die Stelle und dein Lebenslauf.':'Wähle ein früheres Anschreiben, das nach dir klingt. Für jede Stelle entsteht daraus ein neuer Text mit passenden Erfahrungen aus deinem Lebenslauf.'):'So sieht ein hinterlegtes Muster aus. Für eigene Anschreiben kannst du eine PDF in deinem Arbeitsbereich auswählen.'}</p>
         ${live()?`
@@ -214,7 +222,6 @@ function connectionPage() {
     <button class="text-button recheck" id="check-providers">Anmeldestatus prüfen</button>
     `:`<div class="panel connection"><h2>Eigene Bewerbungen</h2><p>Öffne den eigenen Arbeitsbereich für deine Unterlagen und die Verbindung zu ChatGPT oder Claude.</p><div class="provider-actions">${state.entry?.live?realAction():''}${demoAction(lastDocument('cv')?[lastDocument('cv')]:[])}</div>${state.entry?.live?'':'<p class="hint">Der eigene Arbeitsbereich ist bei diesem Demostart nicht verfügbar.</p>'}</div>`}`;
 }
-function jobRows(jobs){return `<div class="job-table" role="list">${jobs.map(j=>`<div role="listitem"><button class="job-row" data-job="${j.id}"><span class="company-monogram">${esc(j.employer[0])}</span><span class="job-title"><strong>${esc(j.title)}</strong><small>${esc(j.employer)} · ${esc(j.location)}</small></span>${badge(j.status)}<span class="row-arrow" aria-hidden="true">↗</span></button></div>`).join('')}</div>`;}
 function exportOverview() {
   const date=new Date().toLocaleDateString('de-DE');
   const rows=state.jobs.map(job=>`<tr><td>${esc(job.employer)}</td><td>${esc(job.title)}</td><td>${esc(labels[job.status])}</td></tr>`).join('');
@@ -422,7 +429,32 @@ function bind(){
     }
   };
   document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',event=>{event.preventDefault();navigate(el.dataset.page);}));
-  document.querySelectorAll('[data-job]').forEach(el=>el.addEventListener('click',()=>{selected=el.dataset.job;tab='letter';navigate('applications');}));
+  document.querySelector('#open-search')?.addEventListener('click',()=>{
+    searchExpanded=true;
+    navigate('applications');
+  });
+  for(const row of document.querySelectorAll('[data-preview-job]')) {
+    row.addEventListener('click',()=>{
+      selected=row.dataset.previewJob;
+      render();
+      if(matchMedia('(max-width:760px)').matches) document.querySelector('#preview-letter').focus();
+      else document.querySelector('.inbox-item[aria-pressed=true]').focus();
+    });
+  }
+  const drop=document.querySelector('#cv-drop');
+  if(drop) {
+    for(const type of ['dragover','dragleave','drop']) drop.addEventListener(type,event=>{
+      event.preventDefault();
+      drop.classList.toggle('dragging',type==='dragover');
+      if(type!=='drop') return;
+      const files=event.dataTransfer.files;
+      if(files.length!==1) return notify('Bitte einen einzelnen Lebenslauf als PDF wählen.',true);
+      const field=drop.querySelector('input');
+      field.files=files;
+      field.dispatchEvent(new Event('change'));
+    });
+  }
+  document.querySelectorAll('[data-job]').forEach(el=>el.addEventListener('click',()=>{selected=el.dataset.job;if(filter!=='all'&&current()?.status!==filter)filter='all';tab='letter';navigate('applications');}));
   const tabs=[...document.querySelectorAll('[data-tab]')];
   tabs.forEach((el,index)=>{
     el.addEventListener('click',()=>{
@@ -527,6 +559,7 @@ function bind(){
       for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
       await api('/documents',{name:file.name,kind,base64:btoa(binary)});
       if(kind==='sample') templateHelpOpen=false;
+      if(kind==='cv' && page==='overview') page='documents';
       notify(kind==='sample'?'Musteranschreiben als aktive Vorlage gespeichert.':'PDF lokal gespeichert.');
     },message=>{
       if(!errorBox?.isConnected) return notify(message,true);

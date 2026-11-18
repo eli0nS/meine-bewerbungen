@@ -1,6 +1,6 @@
 # Anleitung
 
-Vom ersten Start bis zur geprüften Bewerbung. Am Computer wechselst du links zwischen den Bereichen. Auf kleinen Bildschirmen öffnest du sie über **Menü**. **Eigene Daten** und **Beispielmodus** zeigen dir, in welchem Arbeitsbereich du bist. Alle Bilder in dieser Anleitung stammen aus einer getrennten Installation mit fiktiven Daten.
+Vom ersten Start bis zur geprüften Bewerbung. Am Computer wechselst du oben zwischen den Bereichen. Auf kleinen Bildschirmen öffnest du sie über **Menü**. **Eigene Daten** und **Beispielmodus** zeigen dir, in welchem Arbeitsbereich du bist. Alle Bilder in dieser Anleitung stammen aus einer getrennten Installation mit fiktiven Daten.
 
 ## Im Chat installieren
 
@@ -8,11 +8,11 @@ Teile die [Installationsseite](../INSTALL.md) mit einem lokalen Codex- oder Clau
 
 Du kannst das Projekt auch als ZIP entpacken und **Start Windows** oder **Start macOS** öffnen. Beim ersten Start braucht das Setup Internet. Ein weiterer Start öffnet die laufende App erneut. Die Anleitung lässt sich auch bei geschlossener App als **web/anleitung.html** öffnen.
 
-![Persönliche Startseite mit der Aktion Lebenslauf hinzufügen und einem Zugang zum Beispielmodus](../web/anleitung-bilder/start.png)
+![Persönliche Startseite mit dem PDF-Feld und einem Zugang zum Beispielmodus](../web/anleitung-bilder/start.png)
 
 ## Den Lebenslauf hinterlegen
 
-1. Klicke auf der Startseite auf **Lebenslauf hinzufügen**. Unter **Unterlagen → PDF auswählen** wählst du deinen Lebenslauf. Verwende eine PDF mit auswählbarem Text, ohne Passwort, bis 8 MB.
+1. Ziehe deinen Lebenslauf auf der Startseite in das PDF-Feld oder klicke auf **Datei auswählen**. Verwende eine PDF mit auswählbarem Text, ohne Passwort, bis 8 MB.
 2. Sobald der Dateiname erscheint, kannst du **Jetzt Stellen finden** wählen. Für die Suche genügt der Lebenslauf.
 3. Für einen Entwurf trägst du unter **Profil** mindestens deinen Namen und deine E-Mail ein und klickst auf **Profil lokal speichern**. Hier kannst du auch Verfügbarkeit, belegte Erfahrung und Wünsche für deine Bewerbung ergänzen.
 
@@ -36,7 +36,7 @@ Lies bei jedem Vorschlag Firma, Aufgaben und Überschneidungen mit deinem Lebens
 
 Hast du kein Muster, kannst du **Ich habe kein Musteranschreiben** öffnen. Drei Fragen helfen dir, eigene Schreibhinweise zu formulieren. Sobald eine PDF aktiv ist, verschwinden diese Fragen. Die Vorlage ist optional. Die fachlichen Aussagen im Anschreiben müssen durch deinen Lebenslauf oder deine bestätigten Angaben belegt sein.
 
-![Schreibvorlage mit Briefillustration, aktivem Musteranschreiben und PDF austauschen](../web/anleitung-bilder/vorlage.png)
+![Schreibvorlage mit aktivem Musteranschreiben und PDF austauschen](../web/anleitung-bilder/vorlage.png)
 
 ## Den KI-Anbieter verbinden
 
@@ -59,7 +59,7 @@ Die gewöhnliche Quellensuche, der lokale Abgleich und der freigegebene Formular
 ## Einen Entwurf prüfen
 
 1. Wähle beim Treffer **Bewerbung vorbereiten**. Lies, welche Angaben der Anbieter verarbeiten soll, und bestätige die Erstellung. Bei Codex klickst du auf **Entwurf mit ChatGPT erstellen**. Bei Claude wählst du **Auftrag für Claude Code erstellen** und startest im Projektchat `/meine-bewerbungen`. Die App übernimmt den geprüften Entwurf.
-2. Auf der Startseite öffnet **Bewerbung prüfen** den angezeigten Entwurf. Unter **Bewerbungen** findest du alle vorbereiteten Stellen. Öffne **Faktenprüfung anzeigen**, um das Ergebnis der unabhängigen Prüfung zu lesen.
+2. Wähle auf der Startseite eine Stelle aus der Liste. Daneben liest du das zugehörige Anschreiben. **Bewerbung prüfen** öffnet Antworten, Anlagen und Freigabe für genau diese Stelle. Unter **Bewerbungen** findest du alle vorbereiteten Stellen. Öffne **Faktenprüfung anzeigen**, um das Ergebnis der unabhängigen Prüfung zu lesen.
 3. Prüfe **Anschreiben**, **Antworten**, **Unterlagen** und **Zielportal**. Speichere Textänderungen mit **Text & PDF speichern** und geänderte Formularangaben mit **Antworten speichern**. Eine Änderung hebt eine bestehende Freigabe auf.
 
 ![Eine ausgewählte Beispielbewerbung mit Faktenprüfung und Anschreiben](../web/anleitung-bilder/entwurf.png)

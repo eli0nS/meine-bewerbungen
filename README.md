@@ -2,13 +2,15 @@
 
 Finde Stellen, die zu deinem Lebenslauf passen. Lies zu jedem Vorschlag, welche Erfahrung dafür spricht. Anschreiben, Belege, Antworten und PDFs stehen pro Stelle zusammen in deinem lokalen Arbeitsbereich.
 
-![Dashboard mit einer vorbereiteten Beispielbewerbung zur Durchsicht](web/anleitung-bilder/bewerbungsuebersicht.png)
+![Stellenauswahl und vollständiges Anschreiben einer fiktiven Bewerbung in der neuen Übersicht](web/anleitung-bilder/bewerbungsuebersicht.png)
 
 ## Im Chat starten
 
 Teile den **[Installationslink](INSTALL.md)** mit einem lokalen Codex- oder Claude-Code-Chat und schreibe „Installiere diese App und öffne sie im Browser.“ Der Chat klont das Projekt und führt das Setup aus. Die vier Rollen sind enthalten. Für die erste Suche genügt ein lesbarer Lebenslauf als PDF. Die persönliche Anmeldung und Zugriffsfreigaben erfolgen bei Bedarf im jeweiligen Client.
 
 **[Bebilderte Anleitung öffnen](docs/ANLEITUNG.md)** · [Arbeitsweise und Datenschutz](docs/WORKFLOW.md)
+
+![Erster Start mit dem Feld für den Lebenslauf und dem Zugang zur Schreibvorlage](web/anleitung-bilder/start.png)
 
 ## Von der Suche zur Bewerbung
 
