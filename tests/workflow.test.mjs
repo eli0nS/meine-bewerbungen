@@ -44,6 +44,14 @@ async function setup(scenario='success',mode='demo') {
   return {base,runtime,request,prepared,approve,close,dir};
 }
 
+async function saveSearchProfile(env) {
+  const {profile}=env.runtime.store.read();
+  const cvId=env.runtime.store.documents().find(d=>d.kind==='cv').id;
+  const preferences={start:'',notice:profile.notice||'',salary:'',minimum:'',hours:'',place:'',workplace:''};
+  const result=await env.request('/search-profile',{name:profile.name,email:profile.email,cvId,preferences});
+  assert.equal(result.status,200,JSON.stringify(result.body));
+}
+
 function nativeCommand(env,args,input='') {
   return new Promise((resolve,reject)=>{
     const child=spawn(process.execPath,['tools/native-draft.mjs',...args],{env:{...process.env,ATELIER_DATA_DIR:env.dir},stdio:['pipe','pipe','pipe'],windowsHide:true});
@@ -226,6 +234,7 @@ test('Native Claude Code handoff searches, checks the PDF, imports a verified dr
       const bytes=await makePdf('Fiktiver Text',content);
       assert.equal((await env.request('/documents',{kind,base64:bytes.toString('base64'),name:kind+'.pdf'})).status,200);
     }
+    await saveSearchProfile(env);
     const matched=await env.request('/search',{query:'Testing',place:'München',boards:['https://job-boards.greenhouse.io/fixture']});
     assert.equal(matched.status,200,JSON.stringify(matched.body));
     assert.deepEqual(matched.body.listings.map(job=>job.source.jobId),['123']);
@@ -274,7 +283,7 @@ test('Native Claude Code handoff searches, checks the PDF, imports a verified dr
     assert.deepEqual(JSON.parse(await nativeCommand(env,['list'])),[]);
     assert.equal(job.answers[0].value,'nur-lokal@example.invalid');
     assert.equal(job.attachments.length,2);
-    assert.ok(requests.length>0&&requests.every(([,method])=>method==='GET'));
+    assert.ok(requests.length>0&&requests.every(([url,method])=>method==='GET'||(method==='POST'&&url==='https://ag.wd3.myworkdayjobs.com/wday/cxs/ag/Airbus/jobs')));
     assert.ok(requests.every(([url])=>!url.includes('Mira')&&!url.includes('Bewerbungsprofil')));
     const again=await env.request('/search',{query:'Testing',place:'München',boards:['https://job-boards.greenhouse.io/fixture']});
     assert.deepEqual(again.body.listings,[]);
@@ -369,6 +378,8 @@ test('Research opens only after CV upload and accepts only matches for that same
     assert.equal((await env.request('/research',{})).status,400);
     const addCv=async content=>env.request('/documents',{kind:'cv',base64:(await makePdf('Fiktiv',content)).toString('base64'),name:'beispiel.pdf'});
     await addCv(cv);
+    assert.equal((await env.request('/research',{})).status,400);
+    await saveSearchProfile(env);
     const {id}= (await env.request('/research',{place:'Beispielstadt'})).body;
     const packet=JSON.parse(await nativeCommand(env,['research','read',id]));
     assert.deepEqual(packet.topics,['Prüftechnik']);
@@ -405,6 +416,7 @@ test('Home accepts a dropped CV and opens the selected letter for review', async
     },Array.from(pdf));
     await page.getByRole('link',{name:/Beispiel.pdf/}).waitFor();
 
+    await saveSearchProfile(env);
     const fixture=env.runtime.store.read();
     fixture.jobs=['Nord','West'].map(id=>({id,title:'Stelle '+id,employer:'Beispielfirma '+id,
       source:{region:'external'},target:'https://example.invalid/jobs/'+id,
@@ -420,4 +432,42 @@ test('Home accepts a dropped CV and opens the selected letter for review', async
     await page.getByRole('button',{name:'Zur Stellensuche'}).click();
     await page.getByRole('button',{name:'Stellen nach Lebenslauf suchen'}).waitFor();
   } finally { await browser.close(); await env.close(); }
+});
+
+test('Hosted posting uses confirmed CV contacts and search profile before approval',async()=>{
+  const env=await setup('success','live');
+  const original=globalThis.fetch;
+  const url='https://beispiel.jobs.personio.de/job/241';
+  const record={'@type':'JobPosting',title:'Test Engineer',description:'Entwicklung und Messreihen für Testsysteme.',hiringOrganization:{name:'Testlabor'},jobLocation:{address:{addressLocality:'Beispielstadt'}}};
+  globalThis.fetch=(link,options)=>{
+    if(new URL(link).origin===env.base) return original(link,options);
+    if(String(link)===url) return Promise.resolve(new Response('<script type="application/ld+json">'+JSON.stringify(record)+'</script>'));
+    if(String(link)===url+'/apply') return Promise.resolve(new Response('<form><label>Vorname<input name="first_name"></label><label>Kündigungsfrist<input name="notice"></label><input type=file name="documents.cv"><input type=file name="documents.other"></form>'));
+    throw new Error('Unerwartete Adresse im Test');
+  };
+  try {
+    const pdf=await makePdf('Lebenslauf','Mira Beispiel\nmira.beispiel@example.invalid\nMira Beispiel baut Testsysteme.');
+    const doc=await env.request('/documents',{kind:'cv',name:'beispiel.pdf',base64:pdf.toString('base64')});
+    assert.equal((await env.request('/search',{url})).status,400);
+    const state=(await env.request('/state',{},'GET')).body;
+    assert.equal(state.contactSuggestions.name,'Mira Beispiel');
+    assert.equal(state.contactSuggestions.email,'mira.beispiel@example.invalid');
+    const profile={cvId:doc.body.id,name:state.contactSuggestions.name,email:'bestaetigt@example.invalid',
+      preferences:{start:'2027-02-01',notice:'Sechs Wochen',salary:'70000',minimum:'61000',hours:'40',workplace:'Hybrid',place:''}};
+    assert.equal((await env.request('/search-profile',profile)).status,200);
+    await env.request('/provider',{provider:'claude'});
+    const {listings}= (await env.request('/search',{url})).body;
+    assert.equal(listings[0].applyTarget,url+'/apply');
+    const create=await env.request('/prepare',{source:listings[0].source,consent:true,draft:exampleDraft,audit:{accepted:true,summary:'Belegt.',issues:[]}});
+    assert.equal(create.status,200,JSON.stringify(create.body));
+    const job=env.runtime.store.read().jobs[0];
+    assert.equal(job.answers.find(a=>a.key==='email').value,profile.email);
+    assert.equal(job.answers.find(a=>a.label==='Kündigungsfrist').value,'Sechs Wochen');
+    assert.equal((await env.request('/jobs/'+job.id+'/send')).status,409);
+    assert.equal((await env.approve(job.id)).status,200);
+    profile.preferences.notice='Drei Monate';
+    await env.request('/search-profile',profile);
+    assert.equal((await env.request('/jobs/'+job.id+'/send')).status,409);
+    assert.equal(env.runtime.store.read().jobs[0].answers.find(a=>a.label==='Kündigungsfrist').value,'Drei Monate');
+  } finally {globalThis.fetch=original; await env.close();}
 });

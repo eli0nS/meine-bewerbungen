@@ -1,3 +1,5 @@
+import { preferencesSchema, extractContacts, preferenceAnswer, checkPreferences } from './search-profile.mjs';
+import { hostedPortal, publicHostedListing } from './hosted-portals.mjs';
 import express from 'express';
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { join, resolve } from 'node:path';
@@ -7,7 +9,7 @@ import Busboy from 'busboy';
 import { Store, digest, now } from './store.mjs';
 import { makePdf } from './documents.mjs';
 import { seedDemo, demoLetter, demoListing, newJob } from './demo.mjs';
-import { validateTarget, deliver } from './portals.mjs';
+import { validateTarget, deliver, publicFormFields } from './portals.mjs';
 import { findJobMatches, matchListings, officialListing, parseJobLink, searchTopics, sourceSchema } from './search.mjs';
 import { assertDraftEvidence, auditSchema, draftPrompt, draftSchema, generateDraft, handoffSchema, installCodex, nativePacket, openCodexLogin, providerStatus } from './agent.mjs';
 import { createNativeQueue } from './native-queue.mjs';
@@ -21,13 +23,13 @@ const fail = (message,status=400) => Object.assign(new Error(message),{status});
 const escape = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const jobSource=z.object({board:z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/),jobId:z.string().regex(/^[a-zA-Z0-9-]{1,40}$/),region:z.string(),employer:z.string().optional()});
 
-async function pdfText(document) {
+async function pdfText(document,lines=false) {
   const {getDocument}=await import('pdfjs-dist/legacy/build/pdf.mjs');
   const task=getDocument({data:new Uint8Array(document.bytes),useSystemFonts:true,isEvalSupported:false,enableXfa:false,stopAtErrors:true});
   try {
     const pdf=await task.promise;
     const pages=[];
-    for(let n=1;n<=Math.min(pdf.numPages,12);n++) pages.push((await (await pdf.getPage(n)).getTextContent()).items.map(item=>item.str||'').join(' '));
+    for(let n=1;n<=Math.min(pdf.numPages,12);n++) pages.push((await (await pdf.getPage(n)).getTextContent()).items.map(item=>(item.str||'')+(lines&&item.hasEOL?'\n':'')).join(' '));
     return pages.join('\n').trim().slice(0,24000);
   } catch { throw fail('Die PDF lässt sich nicht lesen. Wähle eine PDF mit auswählbarem Text und ohne Passwort.'); }
   finally { await task.destroy(); }
@@ -43,11 +45,17 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
   const native = createNativeQueue(join(dataDir,'native-inbox'));
   const research = createNativeQueue(join(dataDir,'research-inbox'));
   const discovered = new Map();
+  let matchedTopics;
   function remember(listings) {
     for(const listing of listings) {
       if(listing.source) continue;
       const jobId=digest(listing.target).slice(0,32);
-      listing.source={region:'external',board:'public',jobId};
+      const portal=hostedPortal(listing.target);
+      listing.source={region:portal?'hosted':'external',board:'public',jobId};
+      if(portal) {
+        listing.portal=portal.provider;
+        listing.applyTarget=portal.apply;
+      }
       discovered.set(jobId,listing);
     }
     while(discovered.size>200) discovered.delete(discovered.keys().next().value);
@@ -75,10 +83,10 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
 
   async function liveContext(source,start,cv,sample) {
     let listing,details;
-    if(source.region==='external') {
+    if(['external','hosted'].includes(source.region)) {
       listing=discovered.get(source.jobId);
-      if(!listing) throw fail('Bitte suche die Anzeige erneut, um ihren Entwurf vorzubereiten.');
-      details={fields:[],hasCoverLetter:true};
+      if(!listing||listing.source.region!==source.region) throw fail('Bitte suche die Anzeige erneut, um ihren Entwurf vorzubereiten.');
+      details={fields:listing.applyTarget?await publicFormFields(hostedPortal(listing.target)):[],hasCoverLetter:true};
     } else {
       const parsed=sourceSchema.parse(source);
       if(!/^\d{1,20}$/.test(source.jobId)) throw fail('Der Stellenlink ist ungültig.');
@@ -90,7 +98,7 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
     if(!matchListings([listing],{cvText}).length) throw fail('Für diese Stelle fehlt ein fachlicher Bezug im aktuellen Lebenslauf.');
     if(sample&&!sampleText) throw fail('Das Muster enthält keinen lesbaren Text. Wähle eine PDF mit auswählbarem Text.');
     const {name,evidence,criteria,notice}=start.profile;
-    const context={profile:{name,evidence,criteria,notice},cvText,sampleText,template:sample?'':start.template,listing,questions:details.fields.filter(a=>!['first_name','last_name','email','phone'].includes(a.key))};
+    const context={profile:{name,evidence,criteria,notice},cvText,sampleText,template:sample?'':start.template,listing,questions:details.fields.filter(a=>a.type!=='checkbox'&&!['first_name','last_name','email','phone'].includes(a.key))};
     return {listing,details,context};
   }
   const newestDocument=kind=>store.documents().find(doc=>doc.kind===kind);
@@ -99,12 +107,55 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
     if(!cv) throw fail('Bitte zuerst den Lebenslauf hinterlegen.');
     const sample=newestDocument('sample');
     if(!start.profile.name || (mode==='live' && !start.profile.email)) throw fail('Bitte zuerst Namen und E-Mail im Profil hinterlegen.');
-    return {cv,sample,hash:digest({profile:start.profile,template:start.template,provider:start.provider,cv:cv.hash,sample:sample?.hash})};
+    return {cv,sample,hash:digest({profile:start.profile,preferences:start.preferences,template:start.template,provider:start.provider,cv:cv.hash,sample:sample?.hash})};
   }
   let activeLoginUntil=0;
   let installation;
   app.get('/health',(req,res)=>res.json({app:'meine-bewerbungen',mode,ready:true}));
-  app.get('/api/state',(req,res) => res.json({ ...store.read(), documents:store.documents(), mode, csrf, preparing, preparationStage, nativePending:native.pending(), entry }));
+  let extracted;
+  const savedPreferences=cv=>{
+    const prefs=store.read().preferences;
+    if(!cv||!prefs||prefs.cvId!==cv.id) throw fail('Bitte bestätige zuerst die Angaben im Suchprofil.');
+    return prefs;
+  };
+  app.get('/api/state',async(req,res)=>{
+    const cv=newestDocument('cv');
+    if(mode==='live'&&cv&&extracted?.id!==cv.id) {
+      const contacts=extractContacts(await pdfText(store.document(cv.id),true).catch(()=>''));
+      extracted={id:cv.id,...contacts};
+    }
+    res.json({...store.read(),documents:store.documents(),contactSuggestions:cv?.id===extracted?.id?extracted:null,
+      mode,csrf,preparing,preparationStage,nativePending:native.pending(),entry});
+  });
+  app.post('/api/search-profile',async(req,res)=>{
+    const input=z.object({cvId:z.string().uuid(),name:z.string().trim().max(160),email:z.union([z.literal(''),z.string().email().max(200)]),preferences:preferencesSchema}).strict().parse(req.body);
+    const cv=newestDocument('cv');
+    if(mode!=='live'||cv?.id!==input.cvId) throw fail('Der Lebenslauf hat sich geändert. Öffne das Suchprofil erneut.',409);
+    if(input.preferences.occupation) {
+      const normalized=s=>s.normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim();
+      if(!normalized(await pdfText(store.document(cv.id))).includes(normalized(input.preferences.occupation)))
+        throw fail('Übernimm die Berufsbezeichnung genau aus deinem Lebenslauf oder lass sie offen.');
+      if(newestDocument('cv')?.id!==cv.id) throw fail('Der Lebenslauf wurde geändert.',409);
+    }
+    const state=store.read();editable(state);
+    const old=state.preferences||{};
+    const preferences={...input.preferences,cvId:cv.id};
+    const changed=JSON.stringify(old)!==JSON.stringify(preferences)||state.profile.name!==input.name||state.profile.email!==input.email;
+    if(changed) for(const job of state.jobs.filter(j=>!['sent','unknown'].includes(j.status))) {
+      store.invalidate(state,job,'Suchprofil geändert. Prüfe die Antworten und Anlagen erneut.');
+      for(const answer of job.answers) {
+        const before=preferenceAnswer(answer,old),after=preferenceAnswer(answer,preferences);
+        if(before!==undefined&&answer.value===before) answer.value=after??'';
+        if(answer.key==='email'&&answer.value===state.profile.email) answer.value=input.email;
+        if(['first_name','last_name'].includes(answer.key)&&state.profile.name!==input.name) {
+          const parts=input.name.split(/\s+/);
+          answer.value=answer.key==='first_name'?parts[0]:parts.slice(1).join(' ');
+        }
+      }
+    }
+    state.profile={...state.profile,name:input.name,email:input.email,notice:preferences.notice};
+    state.preferences=preferences; store.save(state);res.json({ok:true});
+  });
   app.get('/api/prepare/progress',(req,res)=>res.json({stage:preparationStage}));
   app.get('/api/providers/:provider',async(req,res)=>{
     if(mode!=='live'||!['codex','claude'].includes(req.params.provider)) throw fail('Diese Verbindung ist hier nicht verfügbar.',404);
@@ -129,6 +180,7 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
     if (mode==='demo' && profile.email && !profile.email.endsWith('@example.invalid')) throw fail('Bitte in der Demo ausschließlich fiktive @example.invalid-Adressen nutzen.');
     const state=store.read(); editable(state);
     state.profile=profile;
+    if(state.preferences) state.preferences.notice=profile.notice;
     for(const job of state.jobs.filter(j=>!['sent','unknown'].includes(j.status))) store.invalidate(state,job,'Profil geändert. Erneute Prüfung erforderlich.');
     store.event(state,'','Profil lokal gespeichert.'); store.save(state); res.json({ok:true});
   });
@@ -178,36 +230,45 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
     const cv=newestDocument('cv');
     if(!cv) throw fail('Hinterlege zuerst deinen Lebenslauf unter Unterlagen.');
     if(mode==='demo') return res.json({listings:[{...demoListing,matchesProfile:['Prüfaufbauten','Sensorik','Messreihen'],source:{board:'fixture',jobId:'demo',region:'local'}}]});
+    const prefs=savedPreferences(cv);
+    const searchPlace=place===undefined?prefs.place:place;
     const {jobs}=store.read();
     const cvText=await pdfText(store.document(cv.id));
     if(!cvText) throw fail('Die Suche braucht einen Lebenslauf mit auswählbarem Text.');
     const existing=jobs.map(job=>job.target);
     if(url?.trim()) {
-      const {listing}=await officialListing(parseJobLink(url.trim()));
-      return res.json({listings:matchListings([listing],{cvText,existing})});
+      const portal=hostedPortal(url.trim());
+      const listing=portal?await publicHostedListing(url.trim(),portal):(await officialListing(parseJobLink(url.trim()))).listing;
+      return res.json({listings:remember(checkPreferences(matchListings([listing],{cvText,existing}),prefs))});
     }
-    const result=await findJobMatches({cvText,query,place,boards,existing});
+    const result=await findJobMatches({cvText,query,place:searchPlace,boards,existing,preferences:prefs});
+    matchedTopics={cvHash:cv.hash,titles:result.listings.slice(0,3).map(j=>j.title)};
     res.json({...result,listings:remember(result.listings)});
   });
   app.post('/api/research',async(req,res)=>{
     if(mode!=='live') throw fail('Diese Suche steht im eigenen Arbeitsbereich zur Verfügung.');
-    const {place}=z.object({place:z.string().max(160).default('')}).strict().parse(req.body);
+    const {place,query}=z.object({place:z.string().max(160).default(''),query:z.string().max(300).default('')}).strict().parse(req.body);
     const cv=newestDocument('cv');
     if(!cv) throw fail('Hinterlege zuerst deinen Lebenslauf.');
+    const prefs=savedPreferences(cv);
     const topics=searchTopics(await pdfText(store.document(cv.id)));
-    if(!topics.length) throw fail('Für die externe Suche fehlen eindeutig erkennbare Fachbegriffe. Die lokale Suche kann weitere Berufsbezeichnungen vergleichen.');
-    const id=await research.issue({topics,place},{hash:digest([cv.hash,place]),target:'web',cvHash:cv.hash,place});
+    if(prefs.occupation&&!topics.includes(prefs.occupation)) topics.unshift(prefs.occupation);
+    if(!topics.length&&matchedTopics?.cvHash===cv.hash) topics.push(...matchedTopics.titles);
+    if(!topics.length) throw fail('Ergänze unter Suchprofil bearbeiten eine Berufsbezeichnung aus deinem Lebenslauf für die Firmenrecherche.');
+    const id=await research.issue({topics,place},{hash:digest([cv.hash,place,query,prefs]),target:'web',cvHash:cv.hash,place,query,prefsHash:digest(prefs)});
     res.json({id,topics});
   });
   app.get('/api/research/:id',async(req,res)=>{
     const task=research.get(req.params.id);
     const cv=newestDocument('cv');
     if(!cv||cv.hash!==task.cvHash) throw fail('Dein Lebenslauf wurde geändert. Starte die Suche erneut.');
+    const prefs=savedPreferences(cv);
+    if(task.prefsHash!==digest(prefs)) throw fail('Das Suchprofil wurde geändert. Starte die Suche erneut.');
     const result=await research.result(req.params.id);
     if(!result) return res.json({status:'waiting'});
     const candidates=webResults.parse(result);
     const cvText=await pdfText(store.document(cv.id));
-    res.json({status:'ready',listings:remember(matchListings(candidates,{cvText,place:task.place,existing:store.read().jobs.map(j=>j.target)}))});
+    res.json({status:'ready',listings:remember(matchListings(checkPreferences(candidates,prefs),{cvText,query:task.query,place:task.place,existing:store.read().jobs.map(j=>j.target)}))});
   });
   app.post('/api/claude/export',async(req,res) => {
     if(mode!=='live') throw fail('Die Demo verwendet einen fiktiven Entwurf.');
@@ -255,7 +316,7 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
         job.target=`${base}/test-portal/${job.id}`;
       } else {
         const {listing,details,context}=await liveContext(source,start,cv,sample);
-        if(start.jobs.some(j=>j.target===listing.target)) throw fail('Diese Stelle wurde bereits erfasst.',409);
+        if(start.jobs.some(j=>j.target===listing.target||(listing.applyTarget&&j.applyTarget===listing.applyTarget))) throw fail('Diese Stelle wurde bereits erfasst.',409);
         let result;
         if(start.provider==='claude'&&nativeId) {
           const metadata=native.get(nativeId);
@@ -273,7 +334,7 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
         const profileAnswers=new Map([['first_name',name[0]],['last_name',name.slice(1).join(' ')],['email',start.profile.email],['phone',start.profile.phone]]);
         const candidates=new Map(draft.values.map(a=>[a.key,a.value]));
         const answers=details.fields.map(field=>{
-          const value=profileAnswers.get(field.key)??candidates.get(field.key)??'';
+          const value=profileAnswers.get(field.key)??preferenceAnswer(field,start.preferences)??candidates.get(field.key)??'';
           return {...field,value:field.options.length&&!field.options.includes(value)?'':value};
         });
         const method=start.provider==='codex'?'Codex':nativeId?'Claude Code':'Claude · manueller Import';
@@ -282,7 +343,7 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
       const letterBytes=await makePdf(job.title,job.letter);
       const state=store.read(); editable(state);
       if(inputHash!==inputs(state).hash) throw fail('Unterlagen oder KI-Dienst wurden während der Vorbereitung geändert. Bitte neu starten.',409);
-      if(mode!=='demo'&&state.jobs.some(j=>j.target===job.target)) throw fail('Diese Stelle wurde bereits erfasst.',409);
+      if(mode!=='demo'&&state.jobs.some(j=>j.target===job.target||(job.applyTarget&&j.applyTarget===job.applyTarget))) throw fail('Diese Stelle wurde bereits erfasst.',409);
       const letter=store.addDocument(`Anschreiben_${job.id.slice(0,8)}.pdf`,'letter',letterBytes);
       job.attachments=[cv.id,letter.id];
       state.jobs.unshift(job);
@@ -352,11 +413,18 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
     const fixtureToken=randomBytes(24).toString('hex');
     fixtures.set(job.id,{token:fixtureToken,received:0,receipt:null});
     let result;
-    try { result=await deliver({job:copy,documents,mode,base,headless,fixtureToken,onSubmit:async()=>{
+    try { result=await deliver({job:copy,documents,mode,base,headless,fixtureToken,onLogin:async()=>{
+      const next=store.read(); store.event(next,job.id,'Bitte im geöffneten Browser bei JOIN anmelden und zur freigegebenen Stelle zurückkehren.'); store.save(next);
+    },onSubmit:async()=>{
       const next=store.read(); store.event(next,job.id,'Konkrete Absendeaktion im Portal ausgelöst.'); store.save(next);
     }}); } catch { result={status:'unknown',message:'Der Versand wurde unerwartet unterbrochen. Bitte den Eingang persönlich prüfen.'}; }
     const next=store.read(); const current=getJob(next,job.id);
     if(mode==='demo'&&result.status==='sent'&&!fixtures.get(job.id)?.receipt) { result.status='unknown';result.message='Die lokale Portalquittung fehlt.'; }
+    if(result.status==='blocked' && result.fields?.length) {
+      const merged=answerSchema.array().max(80).safeParse([...current.answers,...result.fields]);
+      if(merged.success) {current.answers=merged.data.map(a=>({...a,value:a.value||preferenceAnswer(a,next.preferences)||''}));current.revision++;}
+      else result.message='Die neuen Portalfragen überschreiten die unterstützten Formulargrenzen.';
+    }
     current.status=result.status; current.blocker=result.status==='sent'?'':result.message; current.confirmation=result.status==='sent'?{message:result.message,url:result.confirmationUrl,time:now()}:null;
     store.event(next,job.id,result.status==='sent'?'Portal hat den Eingang bestätigt.':result.message); store.save(next); res.json({status:result.status});
   });

@@ -10,7 +10,7 @@ Bei einem lokalen Installationsauftrag folge der [Installation](../../../INSTALL
 ## Rechercheaufträge
 
 1. Lies mit `node tools/native-draft.mjs research list` die offenen Rechercheaufträge. Nur die App stellt sie nach einem lesbaren Lebenslauf und einem bewussten Suchstart aus. Ohne Auftrag suchst du keine Stellen.
-2. Lies den Auftrag mit `node tools/native-draft.mjs research read <id>`. Übergebe ausschließlich die enthaltenen Fachgebiete und den Suchort an die Rolle `recherche`. Sie prüft Anzeigen nach den [Rechercheregeln](references/recherche.md).
+2. Lies den Auftrag mit `node tools/native-draft.mjs research read <id>`. Übergebe ausschließlich die enthaltenen Fachgebiete oder öffentlichen Stellentitel und den Suchort an die Rolle `recherche`. Sie prüft Anzeigen nach den [Rechercheregeln](references/recherche.md).
 3. Übergib die Treffer als JSON-Array per Standardeingabe an `node tools/native-draft.mjs research complete <id>`. Bei null verifizierten Treffern übergib `[]`. Die App vergleicht Titel und Aufgaben erneut mit dem aktuellen Lebenslauf. Der Auftrag verfällt nach 30 Minuten.
 4. Bearbeite bei einem laufenden Auftrag auch die Entwurfswarteschlange. Sind beide Listen leer und wartet die Person gerade in der App, kannst du einmal mit `research wait` bzw. `wait` auf den nächsten Auftrag warten. Eine geschlossene Chatsitzung führt keine Webrecherche aus.
 

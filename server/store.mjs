@@ -41,7 +41,7 @@ export class Store {
   }
   event(state, jobId, message) { state.events.unshift({ id: randomUUID(), jobId, message, time: now() }); }
   snapshot(job, state) {
-    return digest({ employer: job.employer, title: job.title, target: job.target, source: job.source, letter: job.letter, answers: job.answers, attachments: job.attachments.map(id => {
+    return digest({ employer: job.employer, title: job.title, target: job.target, applyTarget:job.applyTarget, source: job.source, letter: job.letter, answers: job.answers, attachments: job.attachments.map(id => {
       const doc = this.document(id);
       if (!doc) throw new Error('Eine Anlage fehlt. Bitte erneut prüfen.');
       if (doc.hash !== digest(Buffer.from(doc.bytes))) throw new Error('Die Dateiprüfung ist fehlgeschlagen.');

@@ -1,3 +1,5 @@
+import { checkPreferences } from './search-profile.mjs';
+import { companySources } from './company-search.mjs';
 import { z } from 'zod';
 import { publicFeeds } from './discovery.mjs';
 
@@ -64,6 +66,11 @@ const specialties=[
   ['Handwerk',/\b(tischler\w*|schreiner\w*|carpentry|handwerk\w*)\b/],
   ['Gastronomie',/\b(koch|kochin|gastro\w*|restaurant\w*|hospitality)\b/],
   ['Design',/\b(design\w*|gestaltung|ux|typograf\w*|typograph\w*)\b/],
+  ['Gesundheitswesen',/\b(medizin\w*|physiotherap\w*|ergotherap\w*|apothek\w*|clinical|pharmac\w*)\b/],
+  ['Recht',/\b(jurist\w*|rechtsanw\w*|legal|paralegal|rechtsfach\w*)\b/],
+  ['Wissenschaft',/\b(labor\w*|biolog\w*|chemie\w*|chemiker\w*|physik\w*|scientist)\b/],
+  ['Bauwesen',/\b(bauleit\w*|hochbau\w*|tiefbau\w*|architekt\w*|civil engineering)\b/],
+  ['Einzelhandel',/\b(einzelhandel\w*|kassier\w*|retail|verkauf\w*)\b/],
   ['Verwaltung',/\b(verwaltung\w*|sachbearbeit\w*|burokauf\w*|administration)\b/]
 ];
 const locationNames={munich:['munich','munchen','muenchen'],munchen:['munich','munchen','muenchen'],muenchen:['munich','munchen','muenchen'],cologne:['cologne','koln','koeln'],koln:['cologne','koln','koeln'],germany:['germany','deutschland'],deutschland:['germany','deutschland']};
@@ -86,7 +93,7 @@ export function searchTopics(cvText) {
   return specialties.filter(([,pattern])=>pattern.test(normalize(cvText))).map(([label])=>label);
 }
 
-export async function findJobMatches({cvText,query='',place='',boards=[],existing=[]}) {
+export async function findJobMatches({cvText,query='',place='',boards=[],existing=[],preferences={}}) {
   if (!cvText?.trim()) throw new Error('Hinterlege zuerst einen lesbaren Lebenslauf.');
   const unique=new Map(starterBoards.map(board=>[`${board.region}:${board.board}`,board]));
   for(const url of boards) {
@@ -94,11 +101,12 @@ export async function findJobMatches({cvText,query='',place='',boards=[],existin
     const key=`${board.region}:${board.board}`;
     if(!unique.has(key)) unique.set(key,board);
   }
-  const results=await Promise.allSettled([...Array.from(unique.values(),boardListings),...publicFeeds.map(load=>load())]);
+  const feeds=[...publicFeeds,...companySources(searchTopics(cvText))];
+  const results=await Promise.allSettled([...Array.from(unique.values(),boardListings),...feeds.map(load=>load())]);
   const reached=results.filter(result=>result.status==='fulfilled');
   if(!reached.length) throw new Error('Die Stellenportale sind gerade nicht erreichbar. Versuche die Suche später erneut oder füge eine konkrete Anzeige ein.');
   const candidates=reached.flatMap(result=>result.value);
-  return {listings:matchListings(candidates,{cvText,query,place,existing}),sources:{checked:reached.length,total:results.length}};
+  return {listings:matchListings(checkPreferences(candidates,preferences),{cvText,query,place,existing}),sources:{checked:reached.length,total:results.length}};
 }
 
 export function matchListings(candidates,{cvText,query='',place='',existing=[]}) {
@@ -125,7 +133,7 @@ export function matchListings(candidates,{cvText,query='',place='',existing=[]})
     const titleHits=commonSpecialties.filter(([,pattern])=>pattern.test(name)).length;
     const keywords=commonWords.filter(word=>titleWords.has(word));
     if(!titleHits && !keywords.length && commonSpecialties.length<2) continue;
-    const score=titleHits*8+keywords.length*5+commonSpecialties.length*4+Math.min(commonWords.length,10)+queryHits*3;
+    const score=(job.preferenceScore||0)+titleHits*8+keywords.length*5+commonSpecialties.length*4+Math.min(commonWords.length,10)+queryHits*3;
     const matchesProfile=[...new Set([...commonSpecialties.map(([,pattern])=>cv.match(pattern)[0]),...keywords])].slice(0,5);
     matches.push({score,list:({...job,matchesProfile})});
     previous.add(job.target);

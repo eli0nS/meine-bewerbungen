@@ -12,6 +12,7 @@ let providers = {};
 let search = { url:'', query:'', place:'', boards:[] };
 let searched = false;
 let searchExpanded = false;
+let editingPreferences=false;
 let searchSources = null;
 let webTask=sessionStorage.getItem('research-task');
 let checkingWeb=false;
@@ -48,6 +49,7 @@ async function refresh() {
   if(state&&cvId(state)!==cvId(next)) {
     listings=[]; searched=false; webTask=null; sessionStorage.removeItem('research-task');
   }
+  if(!state||cvId(state)!==cvId(next)) search.place=next.preferences?.place||'';
   state=next; if(!selected&&state.jobs.length) selected=state.jobs[0].id; render();
 }
 function navigate(next) {
@@ -162,7 +164,7 @@ function empty(heading,text,button,nav){return `<div class="empty"><h3>${heading
 function documentsPage(docs){return `${title('Unterlagen','Hinterlege deinen Lebenslauf und die Angaben für Bewerbungsformulare.',docs.length?route('applications','Jetzt Stellen finden','primary'):'')}
   <div class="documents-grid"><section class="panel"><div class="section-top"><h2>Lebenslauf</h2><span class="small muted">PDF · bis 8 MB</span></div>${docs.length?`<a class="document-tile" href="/api/documents/${docs[0].id}" download><span class="pdf-symbol">PDF</span><div><strong>${esc(docs[0].name)}</strong><small>PDF herunterladen</small></div><span aria-hidden="true">↓</span></a>`:empty('Dein Lebenslauf fehlt noch.','Wähle eine PDF-Datei mit deinem Lebenslauf.')}
   ${state.mode==='live'?'<label class="button secondary file-button">PDF auswählen<input id="cv-file" type="file" accept="application/pdf"></label>':'<p class="hint">Der Beispielmodus verwendet den fiktiven Lebenslauf von Mira Beispiel.</p>'}</section>
-  <section class="panel"><h2>Profil</h2><p class="muted small">Für die Suche reicht der Lebenslauf. Name und E-Mail brauchst du beim Erstellen einer Bewerbung.</p><form id="profile-form" class="form-stack"><div class="two-fields">${input('Vollständiger Name','name',state.profile.name,'autocomplete="off" required')}${input('E-Mail','email',state.profile.email,'type="email" required')}</div><div class="two-fields">${input('Telefon','phone',state.profile.phone)}${input('Wohnort','city',state.profile.city)}</div>${input('Kündigungsfrist oder Verfügbarkeit','notice',state.profile.notice)}<label>Deine Suchkriterien<textarea name="criteria" rows="2" placeholder="Rollen, Ort, Arbeitsumfang, Gehalt, Arbeitsmodell">${esc(state.profile.criteria)}</textarea></label><label>Belegte Erfahrungen und Qualifikation<textarea name="evidence" rows="6" placeholder="Welche Aufgaben hast du übernommen? Welche Weiterbildung hast du abgeschlossen?">${esc(state.profile.evidence)}</textarea></label><button class="button primary" type="submit">Profil lokal speichern</button></form></section></div>`;}
+  <section class="panel"><h2>Profil</h2><p class="muted small">Vor der Suche bestätigst du dein Suchprofil. Name und E-Mail werden dort aus dem Lebenslauf vorgeschlagen.</p><form id="profile-form" class="form-stack"><div class="two-fields">${input('Vollständiger Name','name',(state.preferences?.cvId===lastDocument('cv')?.id?state.profile.name:state.profile.name||state.contactSuggestions?.name),'autocomplete="off" required')}${input('E-Mail','email',(state.preferences?.cvId===lastDocument('cv')?.id?state.profile.email:state.profile.email||state.contactSuggestions?.email),'type="email" required')}</div><div class="two-fields">${input('Telefon','phone',state.profile.phone)}${input('Wohnort','city',state.profile.city)}</div>${input('Kündigungsfrist oder Verfügbarkeit','notice',state.profile.notice)}<label>Deine Suchkriterien<textarea name="criteria" rows="2" placeholder="Rollen, Ort, Arbeitsumfang, Gehalt, Arbeitsmodell">${esc(state.profile.criteria)}</textarea></label><label>Belegte Erfahrungen und Qualifikation<textarea name="evidence" rows="6" placeholder="Welche Aufgaben hast du übernommen? Welche Weiterbildung hast du abgeschlossen?">${esc(state.profile.evidence)}</textarea></label><button class="button primary" type="submit">Profil lokal speichern</button></form></section></div>`;}
 function templatePage() {
   const sample=lastDocument('sample');
   const picker=`<label class="button ${sample?'secondary':'primary'} file-button">${sample?'PDF austauschen':'Muster-PDF auswählen'}<input id="sample-file" type="file" accept=".pdf,application/pdf" aria-describedby="sample-hint"></label>`;
@@ -233,14 +235,32 @@ function exportOverview() {
   link.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+function searchProfilePage() {
+  const p=state.preferences||{};
+  const proposed=state.contactSuggestions||{};
+  const confirmed=p.cvId===lastDocument('cv')?.id;
+  return `<form id="search-profile" class="form-stack"><h3>Dein Suchprofil</h3>
+    <p class="muted">Prüfe die Angaben vor der Suche. Freie Felder bleiben offen. Die Gehaltsuntergrenze dient der Suche, der Gehaltswunsch den Bewerbungsformularen.</p>
+    <div class="two-fields">${input('Frühester Starttermin','start',p.start,'type="date"')}${input('Kündigungsfrist','notice',p.notice??state.profile.notice,'placeholder="z. B. vier Wochen zum Monatsende"')}</div>
+    <div class="two-fields">${input('Gehaltsuntergrenze · EUR brutto/Jahr','minimum',p.minimum,'type="number" min="1" max="10000000"')}${input('Gehaltswunsch · EUR brutto/Jahr','salary',p.salary,'type="number" min="1" max="10000000"')}</div>
+    <div class="two-fields">${input('Gewünschte Wochenstunden','hours',p.hours,'type="number" min="1" max="100" step="0.5"')}${input('Gewünschter Arbeitsort','place',p.place,'maxlength="160"')}</div>
+    ${input('Berufsbezeichnung aus dem Lebenslauf für die Firmenrecherche (optional)','occupation',p.occupation,'maxlength="90"')}
+    <label>Arbeitsmodell<select name="workplace">${['','Hybrid','Remote','Vor Ort'].map(v=>`<option value="${v}" ${v===p.workplace?'selected':''}>${v||'Offen'}</option>`).join('')}</select></label>
+    <h3>Kontaktdaten für die Portale</h3><p class="hint">Erkannte Angaben aus dem Lebenslauf sind vorbelegt. Prüfe die Schreibweise. Weitere Kontaktdaten kannst du unter Unterlagen ergänzen.</p>
+    <div class="two-fields">${input('Vollständiger Name','name',confirmed?state.profile.name:(proposed.name||state.profile.name),'maxlength="160" autocomplete="name"')}${input('E-Mail','email',confirmed?state.profile.email:(proposed.email||state.profile.email),'type="email" maxlength="200" autocomplete="email"')}</div>
+    <button class="button primary" type="submit">Suchprofil speichern</button>
+  </form>`;
+}
 function applicationsPage() {
   const job=current();
+  const needsProfile=live()&&lastDocument('cv')&&(editingPreferences||state.preferences?.cvId!==lastDocument('cv').id);
   const visible=state.jobs.filter(j=>filter==='all'||j.status===filter);
   return `${title('Bewerbungen',live()?'Finde passende Stellen und prüfe jede Bewerbung vor dem Versand.':'Bereite eine fiktive Bewerbung vor und teste die Freigabe.',state.jobs.length?'<button class="button secondary" id="export-overview" type="button">Übersicht als HTML speichern</button>':'')}
     ${state.jobs.length?`<details class="new-application" ${searchExpanded?'open':''}><summary>${live()?'Stellen suchen oder hinzufügen':'Weitere Beispielstelle vorbereiten'}</summary>`:''}
     <section class="panel search-panel"><h2>${live()?'Passende Stellen finden':'Beispielstelle finden'}</h2>
-      ${live()?`<p>Dein Lebenslauf bestimmt die Vorschläge. Ort und Stichwörter grenzen die Treffer weiter ein.</p>
-        <form id="search-form" class="form-stack">
+      ${needsProfile?searchProfilePage():live()?`<p>Die App durchsucht Stellenbörsen und Firmen direkt. Dein Projektchat kann weitere passende Arbeitgeber und Zulieferer finden. Dafür erhält er Fachgebiete oder passende öffentliche Stellentitel und deinen Suchort.</p>
+        ${lastDocument('cv')?'<button class="text-button" id="edit-preferences">Suchprofil bearbeiten</button>':''}
+        <form id="search-form"  class="form-stack">
           <div class="two-fields">
             ${input('Ort oder Remote (optional)','place',search.place,'placeholder="Zum Beispiel München, Remote"')}
             ${input('Rolle oder Stichwörter (optional)','query',search.query,'placeholder="Zum Beispiel Testing, Beratung"')}
@@ -248,15 +268,16 @@ function applicationsPage() {
           <details class="search-options"><summary>Weitere Firmenportale einbeziehen</summary><label>Greenhouse-Firmenlinks<textarea name="boards" rows="2" placeholder="https://job-boards.greenhouse.io/firma">${esc(search.boards.join('\n'))}</textarea></label><p class="hint">Bis zu fünf Links. Pro Zeile ein Firmenportal.</p></details>
           ${lastDocument('cv')?'<button class="button primary" type="submit">Stellen nach Lebenslauf suchen '+arrow+'</button>':route('documents','Lebenslauf hinzufügen','primary')}
         </form>
-        ${lastDocument('cv')?`<details class="search-options"><summary>Weitere Jobbörsen und Karriereseiten durchsuchen</summary><p class="hint">Dein Chat-Agent sucht zusätzlich auf öffentlichen Seiten wie Stepstone, Indeed und LinkedIn. Er erhält dafür Fachgebiete aus deinem Lebenslauf und den oben eingetragenen Suchort.</p><button id="web-research" class="button secondary" type="button">Webrecherche starten</button>${webTask?`<p role="status">Der Auftrag liegt bereit. Öffne deinen Projektchat und starte <code>${state.provider==='claude'?'/meine-bewerbungen':'$meine-bewerbungen'}</code>. Treffer erscheinen hier.</p>`:''}</details>
+        ${lastDocument('cv')?`<details class="search-options"><summary>Weitere Jobbörsen und Karriereseiten durchsuchen</summary><p class="hint">Dein Chat-Agent sucht zusätzlich bei passenden Firmen, ihren Zulieferern und auf Jobbörsen. Treffer mit belegten Aufgaben erscheinen in dieser Liste.</p><button id="web-research" class="button secondary" type="button">Webrecherche starten</button>${webTask?`<p role="status">Der Auftrag liegt bereit. Öffne deinen Projektchat und starte <code>${state.provider==='claude'?'/meine-bewerbungen':'$meine-bewerbungen'}</code>. Treffer erscheinen hier.</p>`:''}</details>
         <details class="search-options direct-search"><summary>Ich habe schon eine Stellenanzeige</summary>
-          <form id="direct-search-form" class="form-stack"><label>Link zur Stellenanzeige<input id="job-url" name="url" type="url" required placeholder="https://job-boards.greenhouse.io/…" value="${esc(search.url)}"></label>
-          <p class="hint">Direkter Link zu einer einzelnen Greenhouse-Stelle.</p><button class="button secondary" type="submit">Stellenanzeige laden ${arrow}</button></form>
+          <form id="direct-search-form" class="form-stack"><label>Link zur Stellenanzeige<input id="job-url" name="url" type="url" required placeholder="https://…" value="${esc(search.url)}"></label>
+          <p class="hint">Einzelanzeige bei Greenhouse, Personio, JOIN, Lever oder Teamtailor.</p><button class="button secondary" type="submit">Stellenanzeige laden ${arrow}</button></form>
         </details>`:''}`:`<form id="search-form" class="form-stack"><p class="hint">Entwicklungsingenieur:in Prüfsysteme bei Nordstern Systeme.</p><button class="button primary" type="submit">Beispielstelle suchen ${arrow}</button></form>`}
     </section>
+    ${webTask&&live()?'<p class="hint" role="status">Weitere Firmen und Zulieferer werden über den Projektchat recherchiert. Öffne bei Bedarf den Projektchat mit dem installierten Skill. Die Ergebnisse erscheinen hier.</p>':''}
     ${searched?`<section class="search-results"><div class="section-top"><h2>${searchSources?'Vorschläge aus der Stellensuche':live()?'Gefundene Anzeige':'Gefundene Beispielstelle'}</h2></div>
       ${searchSources?`<p class="hint search-count">${searchSources.checked} von ${searchSources.total} Quellen erreichbar · ${listings.length} Vorschläge</p>`:''}
-      ${listings.length?listings.map((j,i)=>`<article class="result"><div><span class="company-name">${esc(j.employer)}</span><h3>${esc(j.title)}</h3><p>${esc(j.location)}${live()?' · '+esc(j.portal||'Greenhouse'):''}</p><p>${esc(j.description.slice(0,240))}${j.description.length>240?'…':''}</p>${j.matchesProfile?.length?`<p><strong>Überschneidungen mit dem Lebenslauf</strong> · ${esc(j.matchesProfile.join(', '))}</p>`:''}${j.target?`<p><a href="${esc(j.target)}" target="_blank" rel="noopener noreferrer">Originalanzeige öffnen ↗</a> · ${j.source?.region==='external'?'Persönlicher Versand':'Portalversand verfügbar'}</p>`:''}</div><button class="button secondary prepare" data-index="${i}" ${!ready()?'disabled':''}>Bewerbung vorbereiten ${arrow}</button></article>`).join(''):`<p>${searchSources?'Keine weiteren passenden Stellen gefunden. Erweitere den Ort oder füge weitere Firmenportale hinzu.':'Keine Anzeige gefunden.'}</p>`}
+      ${listings.length?listings.map((j,i)=>`<article class="result"><div><span class="company-name">${esc(j.employer)}</span><h3>${esc(j.title)}</h3><p>${esc(j.location)}${live()?' · '+esc(j.portal||'Greenhouse'):''}</p><p>${esc(j.description.slice(0,240))}${j.description.length>240?'…':''}</p>${j.matchesProfile?.length?`<p><strong>Überschneidungen mit dem Lebenslauf</strong> · ${esc(j.matchesProfile.join(', '))}</p>`:''}${j.preferenceNotes?.length?`<p>${esc(j.preferenceNotes.join(' · '))}</p>`:''}${j.target?`<p><a href="${esc(j.target)}" target="_blank" rel="noopener noreferrer">Originalanzeige öffnen ↗</a> · ${j.source?.region==='external'?'Persönlicher Versand':j.source?.region==='hosted'?'Portalversand nach Formularprüfung':'Portalversand verfügbar'}</p>`:''}</div><button class="button secondary prepare" data-index="${i}" ${!ready()?'disabled':''}>Bewerbung vorbereiten ${arrow}</button></article>`).join(''):`<p>${searchSources?'Keine weiteren passenden Stellen gefunden. Erweitere den Ort oder füge weitere Firmenportale hinzu.':'Keine Anzeige gefunden.'}</p>`}
       ${listings.length&&!ready()?`<div class="steps-needed"><p>Für den Entwurf brauchst du dein Profil und einen Lebenslauf.</p>${route('documents','Unterlagen ergänzen')}</div>`:''}
     </section>`:''}
     ${state.jobs.length?'</details>':''}
@@ -378,7 +399,9 @@ setInterval(async()=>{
   if(!webTask||!state||busy||checkingWeb||!live()) return;
   checkingWeb=true;
   try {
-    const result=await get('/research/'+webTask);
+    const requested=webTask;
+    const result=await get('/research/'+requested);
+    if(requested!==webTask) return;
     if(result.status!=='ready') return;
     const byTarget=new Map([...listings,...result.listings].map(j=>[j.target,j]));
     listings=[...byTarget.values()];
@@ -409,10 +432,10 @@ function reviewHint(job) {
     job.status==='unknown'?'Bitte den Eingang persönlich prüfen. Der automatische Versand bleibt gesperrt.':
     job.status==='sending'?'Der Versand läuft.':'Prüfe Ziel, Antworten und jede Anlage vor der Freigabe.';
 }
-function review(job){const dirty=Object.keys(edits(job)).length>0;return `<div class="review-header"><div><span class="company-name">${esc(job.employer)}</span><h2>${esc(job.title)}</h2><p>${esc(job.location)} · Fassung ${job.revision}</p></div>${badge(job.status)}</div><div class="target-line"><span>Zielportal</span><a href="${esc(job.target)}" target="_blank" rel="noopener noreferrer">${esc(new URL(job.target).host+new URL(job.target).pathname)} <span aria-hidden="true">↗</span></a></div>
+function review(job){const dirty=Object.keys(edits(job)).length>0;return `<div class="review-header"><div><span class="company-name">${esc(job.employer)}</span><h2>${esc(job.title)}</h2><p>${esc(job.location)} · Fassung ${job.revision}</p></div>${badge(job.status)}</div><div class="target-line"><span>Zielportal</span><a href="${esc(job.applyTarget||job.target)}" target="_blank" rel="noopener noreferrer">${esc(new URL(job.applyTarget||job.target).host+new URL(job.applyTarget||job.target).pathname)} <span aria-hidden="true">↗</span></a></div>
   ${job.blocker?`<div class="notice warning"><strong>${labels[job.status]}</strong><p>${esc(job.blocker)}</p></div>`:''}${job.confirmation?`<div class="notice success"><strong>Der Eingang wurde vom Portal bestätigt.</strong><p>${esc(job.confirmation.message)}</p><a href="${esc(job.confirmation.url)}" target="_blank" rel="noopener">Portalquittung ansehen ↗</a></div>`:''}
   <div class="fit-note"><strong>Warum diese Aufgabe?</strong><p>${esc(job.fit)}</p>${job.gaps?`<p class="small muted">Offen · ${esc(job.gaps)}</p>`:''}${job.audit?`<details class="fact-check"><summary>Faktenprüfung anzeigen</summary><p>${job.audit.revision===job.revision?esc(job.audit.summary):'Diese Fassung wurde nach der Faktenprüfung bearbeitet. Prüfe die Änderungen vor der Freigabe.'}</p><p class="small muted">${esc(job.audit.method)}</p></details>`:''}</div><div class="tabs" role="tablist" aria-label="Bewerbung prüfen">${[['letter','Anschreiben'],['answers','Antworten'],['files','Unterlagen'],['history','Verlauf']].map(([key,label])=>`<button role="tab" aria-selected="${tab===key}" aria-controls="review-tab-content" tabindex="${tab===key?0:-1}" data-tab="${key}" id="tab-${key}">${label}</button>`).join('')}</div>
-  <div class="tab-content" id="review-tab-content" role="tabpanel" tabindex="0" aria-labelledby="tab-${tab}">${reviewBody(job)}</div><div class="review-footer"><p id="review-hint">${dirty?'Speichere deine Änderungen vor der Freigabe oder dem Versand.':reviewHint(job)}</p>${job.source.region==='external'?`<a class="button primary" href="${esc(job.target)}" target="_blank" rel="noopener noreferrer">Zur Originalanzeige ↗</a>`:['prepared','blocked'].includes(job.status)?`<button id="open-review" class="button primary" ${dirty?'disabled':''}>Prüfen & freigeben ${arrow}</button>`:job.status==='approved'?`<button id="send" class="button primary" ${dirty?'disabled':''}>Freigegebene Bewerbung absenden ↗</button>`:''}</div>`;}
+  <div class="tab-content" id="review-tab-content" role="tabpanel" tabindex="0" aria-labelledby="tab-${tab}">${reviewBody(job)}</div><div class="review-footer"><p id="review-hint">${dirty?'Speichere deine Änderungen vor der Freigabe oder dem Versand.':reviewHint(job)}</p>${job.source.region==='external'?`<a class="button primary" href="${esc(job.applyTarget||job.target)}" target="_blank" rel="noopener noreferrer">Zur Originalanzeige ↗</a>`:['prepared','blocked'].includes(job.status)?`<button id="open-review" class="button primary" ${dirty?'disabled':''}>Prüfen & freigeben ${arrow}</button>`:job.status==='approved'?`<button id="send" class="button primary" ${dirty?'disabled':''}>Freigegebene Bewerbung absenden ↗</button>`:''}</div>`;}
 function reviewBody(job){const locked=['sending','sent','unknown'].includes(job.status); const draft=locked?{}:edits(job);
   if(tab==='letter')return `<form id="letter-form"><label class="sr-only" for="letter-text">Individuelles Anschreiben bearbeiten</label><textarea id="letter-text" name="letter" class="letter-editor" rows="20" ${locked?'readonly':''}>${esc(draft['letter-form']?.letter??job.letter)}</textarea>${!locked?'<div class="editor-footer"><span class="small muted">Änderungen erzeugen eine neue Fassung und ein neues PDF.</span><button class="button secondary">Text & PDF speichern</button></div>':''}</form>`;
   if(tab==='answers')return `<form id="answers-form" class="form-stack">${job.answers.map(a=>`<label><span>${esc(a.label)} ${a.required?'<span class="required" aria-hidden="true">*</span><span class="sr-only">Pflichtfeld</span>':''}</span>${a.options.length?`<select name="${esc(a.key)}" ${locked?'disabled':''}><option value="">Bitte auswählen</option>${a.options.map(o=>`<option ${o===(draft['answers-form']?.[a.key]??a.value)?'selected':''}>${esc(o)}</option>`).join('')}</select>`:`<input name="${esc(a.key)}" value="${esc(draft['answers-form']?.[a.key]??a.value)}" ${locked?'readonly':''}>`}</label>`).join('')}${!locked?'<button class="button secondary">Antworten speichern</button>':''}</form>`;
@@ -421,6 +444,18 @@ function reviewBody(job){const locked=['sending','sent','unknown'].includes(job.
 }
 
 function bind(){
+  document.querySelector('#edit-preferences')?.addEventListener('click',()=>{editingPreferences=true;render();document.querySelector('#search-profile input')?.focus();});
+  document.querySelector('#search-profile')?.addEventListener('submit',event=>{
+    event.preventDefault();
+    const {name,email,...preferences}=Object.fromEntries(new FormData(event.currentTarget));
+    const cvId=lastDocument('cv').id;
+    action(async()=>{
+      await api('/search-profile',{name,email,preferences,cvId});
+      editingPreferences=false;search.place=preferences.place;listings=[];searched=false;
+      webTask=null;sessionStorage.removeItem('research-task');
+      notify('Suchprofil gespeichert. Du kannst die Suche jetzt starten.');
+    });
+  });
   const menu=document.querySelector('.nav-toggle');
   menu.onclick=()=>menu.setAttribute('aria-expanded',String(menu.getAttribute('aria-expanded')!=='true'));
   menu.closest('header').onkeydown=event=>{
@@ -516,18 +551,29 @@ function bind(){
       const {query,place,boards,url}=search;
       if(!direct&&boards.length>5) throw new Error('Bitte füge höchstens fünf Firmenportale hinzu.');
       notify('Stellen werden gesucht…');
-      const result=await api('/search',direct?{url}:{query,place,boards});
+      let searchError='';
+      let result={listings:[]};
+      try {result=await api('/search',direct?{url}:{query,place,boards});}
+      catch(error) {if(direct||!live()) throw error; searchError=error.message;}
       listings=result.listings;
       searchSources=result.sources||null;
+      let researchError=searchError?' '+searchError:'';
+      if(!direct&&live()) {
+        try {
+          const task=await api('/research',{place,query});
+          webTask=task.id;
+          sessionStorage.setItem('research-task',task.id);
+        } catch(error) {researchError+=' Firmensuche im Projektchat: '+error.message;}
+      }
       searched=true;
       searchExpanded=true;
-      notify(`${listings.length} ${listings.length===1?'Stelle':'Stellen'} gefunden.`);
+      notify(`${listings.length} ${listings.length===1?'Stelle':'Stellen'} gefunden.${researchError}`);
     });
   });
   document.querySelectorAll('.prepare').forEach(button=>button.addEventListener('click',()=>openPreparation(Number(button.dataset.index))));
   document.querySelector('#web-research')?.addEventListener('click',()=>action(async()=>{
     search.place=document.querySelector('#search-form [name=place]').value.trim();
-    const task=await api('/research',{place:search.place});
+    const task=await api('/research',{place:search.place,query:document.querySelector('#search-form [name=query]').value.trim()});
     webTask=task.id; sessionStorage.setItem('research-task',task.id); searchExpanded=true;
     notify('Recherche gestartet für '+task.topics.join(', ')+'.');
   }));
@@ -545,7 +591,7 @@ function bind(){
     catch(error) { notify(error.message,true); }
     finally { busy=false; }
   });
-  document.querySelector('#send')?.addEventListener('click',()=>action(async()=>{const job=current();const pending=api(`/jobs/${job.id}/send`,{});job.status='sending';render();try { await pending; } catch(error) { await refresh(); throw error; } notify('Der Versandstand wurde aktualisiert.');}));
+  document.querySelector('#send')?.addEventListener('click',()=>action(async()=>{const job=current();if(job.portal==='JOIN')notify('Falls JOIN eine Anmeldung verlangt, öffne den Anmeldelink im Versandbrowser und kehre dort zur Stelle zurück.');const pending=api(`/jobs/${job.id}/send`,{});job.status='sending';render();try { await pending; } catch(error) { await refresh(); throw error; } notify('Der Versandstand wurde aktualisiert.');}));
   for(const [id,kind] of [['cv-file','cv'],['sample-file','sample']])document.querySelector(`#${id}`)?.addEventListener('change',event=>{
     const file=event.target.files[0];
     if(!file)return;
@@ -575,7 +621,7 @@ async function openReview(){
     await refresh();
     throw new Error('Die Fassung wurde geändert. Prüfe die aktualisierte Bewerbung.');
   }
-  dialog.innerHTML=`<button class="dialog-close" aria-label="Prüfung schließen">×</button><h2 id="review-title">Diese Bewerbung freigeben?</h2><p class="muted">Die Freigabe gilt für diese konkrete Fassung.</p><div class="approval-summary"><strong>${esc(job.employer)}</strong><h3>${esc(job.title)}</h3><a href="${esc(job.target)}" target="_blank" rel="noopener">${esc(job.target)}</a><p>Fassung ${job.revision} · ${job.attachments.length} Anlagen</p></div><h3>Vorgesehene Antworten</h3><dl class="answer-summary">${job.answers.map(a=>`<div><dt>${esc(a.label)}</dt><dd>${esc(a.value||'Noch offen')}</dd></div>`).join('')}</dl><h3>Vorgesehene Anlagen</h3>${job.attachments.map(id=>{const d=state.documents.find(d=>d.id===id);return `<a class="review-document" href="/api/documents/${id}" target="_blank" rel="noopener">${esc(d.name)} ↗</a>`;}).join('')}<details><summary>Anschreiben vollständig lesen</summary><div class="letter-read">${esc(job.letter)}</div></details>${review.missing.length?`<p class="notice warning">Pflichtangaben fehlen. ${review.missing.map(esc).join(', ')}</p>`:''}<form id="approve-form"><label class="consent"><input type="checkbox" required name="acknowledged">Ich habe Arbeitgeber, konkrete Stelle, Zielportal, alle Antworten und Unterlagen geprüft und gebe diese Fassung ausdrücklich zum Versand frei.</label><div class="notice warning" id="approve-error" role="alert" hidden></div><div class="dialog-actions"><button class="button secondary" type="button" id="cancel-approve">Weiter prüfen</button><button class="button primary" ${review.missing.length?'disabled':''}>Diese Fassung freigeben</button></div></form>`;
+  dialog.innerHTML=`<button class="dialog-close" aria-label="Prüfung schließen">×</button><h2 id="review-title">Diese Bewerbung freigeben?</h2><p class="muted">Die Freigabe gilt für diese konkrete Fassung.</p><div class="approval-summary"><strong>${esc(job.employer)}</strong><h3>${esc(job.title)}</h3><a href="${esc(job.applyTarget||job.target)}" target="_blank" rel="noopener">${esc(job.applyTarget||job.target)}</a><p>Fassung ${job.revision} · ${job.attachments.length} Anlagen</p></div><h3>Vorgesehene Antworten</h3><dl class="answer-summary">${job.answers.map(a=>`<div><dt>${esc(a.label)}</dt><dd>${esc(a.value||'Noch offen')}</dd></div>`).join('')}</dl><h3>Vorgesehene Anlagen</h3>${job.attachments.map(id=>{const d=state.documents.find(d=>d.id===id);return `<a class="review-document" href="/api/documents/${id}" target="_blank" rel="noopener">${esc(d.name)} ↗</a>`;}).join('')}<details><summary>Anschreiben vollständig lesen</summary><div class="letter-read">${esc(job.letter)}</div></details>${review.missing.length?`<p class="notice warning">Pflichtangaben fehlen. ${review.missing.map(esc).join(', ')}</p>`:''}<form id="approve-form"><label class="consent"><input type="checkbox" required name="acknowledged">Ich habe Arbeitgeber, konkrete Stelle, Zielportal, alle Antworten und Unterlagen geprüft und gebe diese Fassung ausdrücklich zum Versand frei.</label><div class="notice warning" id="approve-error" role="alert" hidden></div><div class="dialog-actions"><button class="button secondary" type="button" id="cancel-approve">Weiter prüfen</button><button class="button primary" ${review.missing.length?'disabled':''}>Diese Fassung freigeben</button></div></form>`;
   dialog.querySelector('.dialog-close').onclick=()=>dialog.close();dialog.querySelector('#cancel-approve').onclick=()=>dialog.close();
   dialog.querySelector('#approve-form').onsubmit=async event=>{
     event.preventDefault();

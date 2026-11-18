@@ -6,18 +6,18 @@ Finde Stellen, die zu deinem Lebenslauf passen. Lies zu jedem Vorschlag, welche 
 
 ## Im Chat starten
 
-Teile den **[Installationslink](INSTALL.md)** mit einem lokalen Codex- oder Claude-Code-Chat und schreibe „Installiere diese App und öffne sie im Browser.“ Der Chat klont das Projekt und führt das Setup aus. Die vier Rollen sind enthalten. Für die erste Suche genügt ein lesbarer Lebenslauf als PDF. Die persönliche Anmeldung und Zugriffsfreigaben erfolgen bei Bedarf im jeweiligen Client.
+Teile den **[Installationslink](INSTALL.md)** mit einem lokalen Codex- oder Claude-Code-Chat und schreibe „Installiere diese App und öffne sie im Browser.“ Der Chat klont das Projekt und führt das Setup aus. Die vier Rollen sind enthalten. Nach dem PDF-Upload bestätigst du dein Suchprofil und die erkannten Kontaktdaten. Die persönliche Anmeldung und Zugriffsfreigaben erfolgen bei Bedarf im jeweiligen Client.
 
 **[Bebilderte Anleitung öffnen](docs/ANLEITUNG.md)** · [Arbeitsweise und Datenschutz](docs/WORKFLOW.md)
 
-![Erster Start mit dem Feld für den Lebenslauf und dem Zugang zur Schreibvorlage](web/anleitung-bilder/start.png)
+![Suchprofil vor der ersten Suche mit Verfügbarkeit, Gehalt und erkannten Kontaktdaten aus einem fiktiven Lebenslauf](web/anleitung-bilder/suchprofil.png)
 
 ## Von der Suche zur Bewerbung
 
 1. **Lebenslauf hinzufügen.** Die PDF bleibt im privaten Datenordner des Betriebssystemkontos. Der Abgleich verwendet ausschließlich den Lebenslauf der jeweiligen Person. Ort und Stichwörter können die Suche einschränken.
-2. **Stellen finden.** Die App lädt öffentliche Stellen von Greenhouse-Firmenportalen, Ashby, Lever und Arbeitnow. Für weitere Jobbörsen und Unternehmensseiten kannst du eine Webrecherche im Projektchat starten. Dafür werden nur die abgeleiteten Fachgebiete und der eingegebene Suchort übergeben. Die Reichweite hängt von öffentlich zugänglichen Anzeigen und den Webwerkzeugen des Clients ab.
+2. **Stellen finden.** Die App durchsucht Firmenportale und Stellenbörsen. BMW, MAN, SAP, Airbus, Bosch, ZF und Schaeffler sind direkte Quellen. Der Projektchat recherchiert zusätzlich passende Arbeitgeber und Zulieferer für den individuellen Lebenslauf. Er erhält Fachgebiete oder passende öffentliche Stellentitel und den Suchort. Die Reichweite hängt von öffentlich zugänglichen Anzeigen und den Webwerkzeugen des Clients ab.
 3. **Entwurf lesen.** Der Schreibagent verknüpft Aufgaben der Anzeige mit belegten Erfahrungen. Ein früheres Anschreiben kann den Stil vorgeben. Ein zweiter Agent prüft die Aussagen. Für diese beiden Schritte verarbeitet der gewählte Anbieter die freigegebenen Texte.
-4. **Über den Versand entscheiden.** Bei unterstützten Greenhouse-Formularen prüfst du Antworten, Anschreiben und Anlagen und gibst diese Fassung frei. Bei anderen Portalen erhältst du den Entwurf und öffnest die Originalanzeige für die persönliche Einreichung.
+4. **Über den Versand entscheiden.** Unterstützt werden Greenhouse sowie eindeutig zuordenbare Formulare von Personio, JOIN, Lever und Teamtailor. Du prüfst Antworten, Anschreiben und Anlagen und gibst diese Fassung frei. Neue Fragen verlangen eine neue Freigabe. Bei JOIN kannst du dich im geöffneten Versandbrowser anmelden. Bei anderen Portalen erhältst du den Entwurf und öffnest die Originalanzeige für die persönliche Einreichung.
 
 ## Modellwahl und Kontingent
 

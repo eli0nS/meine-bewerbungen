@@ -13,20 +13,28 @@ Du kannst das Projekt auch als ZIP entpacken und **Start Windows** oder **Start 
 ## Den Lebenslauf hinterlegen
 
 1. Ziehe deinen Lebenslauf auf der Startseite in das PDF-Feld oder klicke auf **Datei auswählen**. Verwende eine PDF mit auswählbarem Text, ohne Passwort, bis 8 MB.
-2. Sobald der Dateiname erscheint, kannst du **Jetzt Stellen finden** wählen. Für die Suche genügt der Lebenslauf.
-3. Für einen Entwurf trägst du unter **Profil** mindestens deinen Namen und deine E-Mail ein und klickst auf **Profil lokal speichern**. Hier kannst du auch Verfügbarkeit, belegte Erfahrung und Wünsche für deine Bewerbung ergänzen.
+2. Sobald der Dateiname erscheint, kannst du **Jetzt Stellen finden** wählen. Vor der ersten Suche öffnet sich dein Suchprofil.
+3. Die App schlägt Name und E-Mail aus dem lesbaren PDF vor. Prüfe sie im Suchprofil. Unter **Unterlagen → Profil** kannst du sie später bearbeiten. Hier kannst du auch Verfügbarkeit, belegte Erfahrung und Wünsche für deine Bewerbung ergänzen.
 
 ![Unterlagen mit fiktiver Lebenslauf-PDF, Profilfeldern und der Aktion Jetzt Stellen finden](../web/anleitung-bilder/unterlagen.png)
 
+## Suchprofil bestätigen
+
+Gib frühesten Start, Kündigungsfrist, Wochenstunden, Arbeitsort und bevorzugtes Arbeitsmodell an. Die Gehaltsuntergrenze hilft bei der Stellenauswahl. Der separate Gehaltswunsch ist für Portalfragen bestimmt. Beide Angaben sind brutto pro Jahr in Euro. Freie Felder bleiben offen. Für spezialisierte Berufe kannst du eine Berufsbezeichnung aus deinem Lebenslauf für die Firmenrecherche bestätigen.
+
+Prüfe Name und E-Mail und klicke auf **Suchprofil speichern**. Mehrere E-Mail-Adressen oder uneindeutige Namen erfordern deine Auswahl oder Eingabe. **Suchprofil bearbeiten** öffnet die Angaben erneut. Bei einem neuen Lebenslauf bestätigst du sie erneut.
+
+![Suchprofil mit Verfügbarkeit, Gehalt und aus einem fiktiven PDF erkannten Kontaktdaten](../web/anleitung-bilder/suchprofil.png)
+
 ## Passende Stellen finden
 
-Unter **Bewerbungen** startet **Stellen nach Lebenslauf suchen** die lokale Suche. Die App lädt öffentliche Anzeigen von Greenhouse-Firmenportalen, Arbeitnow, Lever und Ashby. Ort und Stichwörter grenzen die Treffer weiter ein. Über **Ich habe schon eine Stellenanzeige** kannst du den direkten Link zu einer einzelnen Greenhouse-Stelle prüfen.
+Unter **Bewerbungen** startet **Stellen nach Lebenslauf suchen** die lokale Suche. Die App lädt öffentliche Anzeigen von Jobbörsen und Firmenportalen, darunter BMW Group, MAN, SAP, Airbus, Bosch, ZF und Schaeffler, soweit deren Quellen erreichbar sind. Die Auswahl richtet sich nach Aufgaben und Lebenslauf. Ein unbekanntes Gehalt erscheint als offener Punkt. Ort und Stichwörter grenzen die Treffer weiter ein. Über **Ich habe schon eine Stellenanzeige** kannst du den direkten Link zu einer einzelnen Stelle bei Greenhouse, Personio, JOIN, Lever oder Teamtailor prüfen.
 
 ![Suchansicht nach dem Hinterlegen des Lebenslaufs mit Ortsfilter, Rollenfilter und Suche](../web/anleitung-bilder/stellensuche.png)
 
-Für zusätzliche Quellen öffnest du **Weitere Jobbörsen und Karriereseiten durchsuchen** und wählst **Webrecherche starten**. Der Projektchat erhält Fachgebiete aus deinem Lebenslauf und den eingegebenen Suchort. Lass ihn nach öffentlich erreichbaren Einzelanzeigen suchen, etwa auf Stepstone, Indeed, LinkedIn oder Unternehmensseiten. Falls der Chat auf deinen Auftrag wartet, starte dort den Projekt-Skill `$meine-bewerbungen` in Codex oder `/meine-bewerbungen` in Claude Code. Die App prüft die zurückgegebenen Treffer lokal gegen deinen Lebenslauf.
+Die Suche legt zusätzlich einen Rechercheauftrag für den Projektchat an. Er sucht passende Arbeitgeber, Unternehmen ihrer Branche und Zulieferer. Er erhält Fachgebiete oder passende öffentliche Stellentitel und deinen Suchort. Unter **Weitere Jobbörsen und Karriereseiten durchsuchen** kannst du diesen Auftrag erneut starten. Lass ihn nach öffentlich erreichbaren Einzelanzeigen suchen, etwa auf Stepstone, Indeed, LinkedIn oder Unternehmensseiten. Falls der Chat auf deinen Auftrag wartet, starte dort den Projekt-Skill `$meine-bewerbungen` in Codex oder `/meine-bewerbungen` in Claude Code. Die App prüft die zurückgegebenen Treffer lokal gegen deinen Lebenslauf.
 
-Lies bei jedem Vorschlag Firma, Aufgaben und Überschneidungen mit deinem Lebenslauf. **Originalanzeige öffnen** führt zur Quelle. **Portalversand verfügbar** kennzeichnet ein unterstütztes Greenhouse-Ziel. Bei **Persönlicher Versand** kannst du den Entwurf vorbereiten und selbst beim Arbeitgeber einreichen.
+Lies bei jedem Vorschlag Firma, Aufgaben und Überschneidungen mit deinem Lebenslauf. **Originalanzeige öffnen** führt zur Quelle. **Portalversand verfügbar** kennzeichnet ein unterstütztes Greenhouse-Ziel. **Portalversand nach Formularprüfung** kennzeichnet unterstützte Links von Personio, JOIN, Lever und Teamtailor. Bei **Persönlicher Versand** kannst du den Entwurf vorbereiten und selbst beim Arbeitgeber einreichen.
 
 ![Ein fiktiver Treffer mit Firma, Aufgaben und Überschneidungen zum Lebenslauf](../web/anleitung-bilder/stellenvorschlag.png)
 
@@ -63,6 +71,8 @@ Die gewöhnliche Quellensuche, der lokale Abgleich und der freigegebene Formular
 3. Prüfe **Anschreiben**, **Antworten**, **Unterlagen** und **Zielportal**. Speichere Textänderungen mit **Text & PDF speichern** und geänderte Formularangaben mit **Antworten speichern**. Eine Änderung hebt eine bestehende Freigabe auf.
 
 ![Eine ausgewählte Beispielbewerbung mit Faktenprüfung und Anschreiben](../web/anleitung-bilder/entwurf.png)
+
+Bei Personio, JOIN, Lever und Teamtailor hängt der Versand vom konkreten Firmenformular ab. Nach deiner Freigabe öffnet die App den lokalen Versandbrowser. Falls JOIN eine Anmeldung verlangt, verwende das geöffnete Fenster, kehre zur freigegebenen Stelle zurück und lass den Tab offen. Die App wartet bis zu drei Minuten. Unter **Antworten** erscheinen zusätzlich erkannte Fragen. Ergänze sie und bestätige die neue Fassung. Die App prüft, ob sie beide PDFs zuordnen kann. Das Anschreiben kann dafür auch in die Dokumentkategorie „Andere“ gelangen. Ein unbekannter Empfänger, eine nicht unterstützte Uploadvariante oder eine offene Verifizierung hält den Versand an.
 
 ## Freigeben und versenden
 

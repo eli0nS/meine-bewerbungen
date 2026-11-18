@@ -27,7 +27,7 @@ try {
   await start('demo');
   const live=await start('live');
   live.store.addDocument('Musteranschreiben_Beispiel.pdf','sample',await makePdf('Fiktives Musteranschreiben','Ich plane Messreihen und entwickle wiederverwendbare Prüfaufbauten.'));
-  const context=await browser.newContext({viewport:{width:1180,height:920},deviceScaleFactor:1,reducedMotion:'reduce'});
+  const context=await browser.newContext({viewport:{width:1180,height:920},locale:'de-DE',deviceScaleFactor:1,reducedMotion:'reduce'});
   const page=await context.newPage();
   const capture=(selector,name)=>page.locator(selector).screenshot({path:join(assets,name+'.png')});
   await page.goto(entry.live);
@@ -35,13 +35,18 @@ try {
   await page.screenshot({path:join(assets,'start.png')});
   await page.getByLabel('Datei auswählen').setInputFiles({
     name:'Lebenslauf_Beispiel.pdf',mimeType:'application/pdf',
-    buffer:Buffer.from(await makePdf('Fiktiver Lebenslauf','Ich plane Messreihen und entwickle Prüfaufbauten.'))
+    buffer:Buffer.from(await makePdf('Fiktiver Lebenslauf','Mira Beispiel\nmira.beispiel@example.invalid\nIch plane Messreihen und entwickle Prüfaufbauten.'))
   });
   await page.getByRole('button',{name:'Jetzt Stellen finden'}).waitFor();
   await page.locator('#toast.show').waitFor({state:'hidden'});
   await page.screenshot({path:join(assets,'unterlagen.png')});
   await page.getByRole('button',{name:'Jetzt Stellen finden'}).click();
+  await page.getByLabel('Kündigungsfrist',{exact:true}).fill('Vier Wochen');
+  await page.getByLabel('Gewünschte Wochenstunden').fill('40');
+  await page.screenshot({path:join(assets,'suchprofil.png'),fullPage:true});
+  await page.getByRole('button',{name:'Suchprofil speichern'}).click();
   await page.getByRole('button',{name:'Stellen nach Lebenslauf suchen'}).waitFor();
+  await page.locator('#toast.show').waitFor({state:'hidden'});
   await page.screenshot({path:join(assets,'stellensuche.png')});
   await context.route('**/api/providers/codex',route=>route.fulfill({json:{status:'signed_out',help:'Melde dich im Browser mit deinem ChatGPT-Konto an.',installUrl:'https://learn.chatgpt.com/docs/codex/cli'}}));
   await context.route('**/api/providers/claude',route=>route.fulfill({json:{status:'manual',help:'Öffne dieses Repo in Claude Code und nutze /meine-bewerbungen. Die Anmeldung läuft in Claude Code.',installUrl:'https://code.claude.com/docs/en/setup'}}));

@@ -1,12 +1,14 @@
+import { hostedPortal, submitHosted, hostedStep, contactFields } from './hosted-portals.mjs';
 import { chromium } from 'playwright';
 import { jobTarget } from './search.mjs';
 import { digest } from './store.mjs';
 
 export function validateTarget(job, mode, base) {
   const target = new URL(job.target);
-  if(mode==='live' && job.source.region==='external') {
+  if(mode==='live' && ['external','hosted'].includes(job.source.region)) {
     if(target.protocol!=='https:' || target.username || target.password || digest(target.href).slice(0,32)!==job.source.jobId)
       throw new Error('Das Ziel weicht von der gefundenen Anzeige ab.');
+    if(job.source.region==='hosted' && (!job.applyTarget||hostedPortal(target.href)?.apply!==job.applyTarget)) throw new Error('Das freigegebene Formular stimmt nicht mit der Anzeige überein.');
     return target;
   }
   if (target.username || target.password || target.hash || target.search) throw new Error('Ungültiges Portalziel.');
@@ -24,9 +26,30 @@ async function blocker(page) {
   return '';
 }
 
-export async function deliver({ job, documents, mode, base, headless, fixtureToken, onSubmit }) {
+// Inspect publicly served form markup without running its scripts or sending applicant data.
+export async function publicFormFields(portal) {
+  const contacts=contactFields();
+  if(portal.provider==='JOIN') return contacts;
+  let browser;
+  try {
+    const response=await fetch(portal.apply,{redirect:'error',signal:AbortSignal.timeout(7000)});
+    if(!response.ok) return contacts;
+    const html=await response.text();
+    if(html.length>3000000) return contacts;
+    browser=await chromium.launch({headless:true});
+    const page=await browser.newPage({javaScriptEnabled:false,serviceWorkers:'block'});
+    await page.route('**/*',route=>route.abort());
+    await page.setContent(html,{waitUntil:'domcontentloaded',timeout:5000});
+    const markup=await hostedStep(page,{answers:contacts},[],new Set(),true);
+    return contacts.concat(markup?.fields||[]).slice(0,80);
+  } catch {return contacts;} finally {await browser?.close();}
+}
+
+export async function deliver({ job, documents, mode, base, headless, fixtureToken, onSubmit, onLogin }) {
   if(job.source.region==='external') throw new Error('Diese Bewerbung reichst du persönlich beim Arbeitgeber ein.');
-  const target = validateTarget(job, mode, base);
+  const listing = validateTarget(job, mode, base);
+  const portal=mode==='live'&&job.source.region==='hosted'?hostedPortal(listing.href):null;
+  const target=portal?new URL(portal.apply):listing;
   let browser;
   let attempted = false;
   try {
@@ -36,7 +59,13 @@ export async function deliver({ job, documents, mode, base, headless, fixtureTok
     await context.route('**/*', route => {
       const request=route.request();
       const url=new URL(request.url());
-      if(url.origin===target.origin) return route.continue();
+      if(url.origin===target.origin) {
+        if(portal) {
+          const next=hostedPortal(url.href);
+          if(next && next.apply!==portal.apply) return route.abort();
+        }
+        return route.continue();
+      }
       // Before entering any personal data, permit only HTTPS assets for the live form.
       const asset=['script','stylesheet','image','font'].includes(request.resourceType());
       return mode==='live'&&loading&&url.protocol==='https:'&&asset&&request.method()==='GET'?route.continue():route.abort();
@@ -44,6 +73,15 @@ export async function deliver({ job, documents, mode, base, headless, fixtureTok
     await context.routeWebSocket('**/*',socket=>socket.close());
     const page = await context.newPage();
     await page.goto(target.href, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    if(portal) {
+      await page.waitForLoadState('load',{timeout:10000}).catch(()=>{});
+      await page.locator('form input:visible,main textarea:visible,input[type=file],input[type=password]:visible').first().waitFor({timeout:10000}).catch(()=>{});
+      loading=false;
+      return await submitHosted(page,job,documents,{portal,headless,onLogin,onSubmit:async()=>{
+        await onSubmit();
+        attempted=true;
+      }});
+    }
     loading=false;
     if (new URL(page.url()).origin !== target.origin || new URL(page.url()).pathname !== target.pathname) throw new Error('Das Portal hat auf ein anderes Ziel umgeleitet.');
     let reason = await blocker(page);
