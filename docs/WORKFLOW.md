@@ -1,0 +1,21 @@
+# Arbeitsweise
+
+Die Person startet Suche und Vorbereitung selbst. Lebenslauf und optionale Schreibvorlage liegen im lokalen Datenspeicher. Ein Assistent bewertet Hauptaufgaben anhand belegter Erfahrungen und nennt fachliche Lücken. Abschlüsse, Tätigkeiten, Dauer und Kenntnisse werden wahrheitsgemäß wiedergegeben. Ein fehlendes Studium oder eine geforderte Jahreszahl allein schließen eine Stelle nicht aus. Die Suchkriterien bestimmt jede Person selbst.
+
+Der Schreibagent analysiert zuerst die Aufgaben der Anzeige und wählt belegte Erfahrungen aus dem Lebenslauf und den bestätigten Profilangaben. Das Anschreiben beginnt mit einer passenden Tätigkeit. Relevante Weiterbildung erscheint früh. Das Muster gibt Ton und Aufbau vor. Zu Aussagen im Entwurf liefert der Schreibagent wörtliche Belege. Die App prüft, ob die Zitate tatsächlich in den angegebenen Quellen stehen. Der zweite Agent prüft zusätzlich, ob die Belege die Aussagen inhaltlich tragen und ob der Aufgabenbezug stimmt. Die Person liest und bearbeitet den Entwurf vor dem Versand.
+
+Die Prüfung zeigt Arbeitgeber, genaue Stelle, Portal, Antworten und Anlagen. Der Server bindet die Freigabe an deren SHA-256-Fassung und die Versionsnummer. Jede Änderung hebt die Freigabe auf. Der Versand startet erst nach dieser konkreten Freigabe. Vorher werden weder Kontaktdaten noch Dokumente an ein Bewerbungsportal übertragen.
+
+Fehlende Pflichtangaben, Login und CAPTCHA führen zum Status „Angehalten“. Nach einem möglichen Absendeversuch ohne sichtbare Portalbestätigung gilt „Ausgang unklar“. Solche Vorgänge bleiben gesperrt und erfordern eine Prüfung außerhalb des automatischen Versands. Ein Neustart macht unterbrochene Versandvorgänge ebenfalls unklar. Nur eine vom Adapter erkannte Portalbestätigung ergibt „Bestätigt versandt“.
+
+Der Demomodus akzeptiert ausschließlich das lokale Testportal. Er nutzt fiktive Daten und deterministische Entwürfe. Reale Portale und KI-Aufrufe sind dort technisch gesperrt.
+
+Demo und eigener Arbeitsbereich haben getrennte lokale Adressen, Sitzungen und Datenordner. Im eigenen Arbeitsbereich läuft die ChatGPT-Anmeldung über die originale Codex CLI. In Claude Code startet der Nutzer den projektlokalen Skill im regulär angemeldeten Client. Nach Freigabe für die Entwurfserstellung tauschen der Skill und die App einen befristeten lokalen Auftrag und das strukturierte Ergebnis aus. Der Auftrag ist an Stelle und Eingabefassung gebunden. Die Queue kann keine Bewerbung freigeben oder versenden. Die App verwaltet keine Anbieter-Anmeldedaten.
+
+Die vier Rollen sind Recherche, Lebenslauf und Anschreiben, unabhängige Faktenprüfung und Portal. Die Quellensuche, der lokale Abgleich und der Portalversand nutzen fest begrenzte Programmabläufe. Die zusätzliche Webrecherche läuft auf Wunsch im Projektchat. Schreiben und Faktenprüfung laufen für Codex in getrennten Modellaufrufen und für Claude Code in getrennten Projektagenten. Öffentliche Stellenfeeds erhalten nur Anfragen nach Anzeigen. Der Abgleich mit dem Lebenslauf erfolgt auf dem Gerät. Bei einer abgelehnten Faktenprüfung wird der Entwurf nicht zur Freigabe übernommen.
+
+Eine hochgeladene Muster-PDF ist die aktive Schreibvorlage. Die Fragen stehen zur Verfügung, wenn kein Muster vorliegt. Die App bettet persönliche PDFs nicht in ihre Oberfläche ein. Der HTML-Export enthält nur Stellen, Unternehmen und Status und hat keine Skripte oder externen Ressourcen. Vorhandene Entwürfe behalten ihre geprüfte Fassung, wenn die Vorlage für künftige Entwürfe geändert wird.
+
+Die lokale Datenbank einschließlich PDFs nutzt den Schutz des Benutzerkontos und des Datenträgers. Die App verschlüsselt sie nicht zusätzlich. Die Freigabe schützt die Anwendung gegen fremde Websites und veraltete Fassungen. Andere Programme mit Zugriff auf dasselbe Betriebssystemkonto liegen außerhalb dieser Grenze.
+
+Ohne textlesbaren Lebenslauf startet keine echte Suche. Freitext im Profil und Schreibmuster sind keine Quellen für fachliche Suchtreffer. Bei der erweiterten Webrecherche erhält der Chat nur Fachgebiete und den gewünschten Ort. Ergebnisse werden gegen den aktuellen Lebenslauf geprüft. Externe Originalanzeigen ohne Portaladapter unterstützen die Anschreibenerstellung und persönliche Einreichung.
