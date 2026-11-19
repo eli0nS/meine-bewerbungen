@@ -17,7 +17,7 @@ import { webResults } from './discovery.mjs';
 
 const root = resolve(fileURLToPath(new URL('..',import.meta.url)));
 const profileSchema = z.object({ name: z.string().max(160), email: z.string().max(200), phone: z.string().max(80), city: z.string().max(160), evidence: z.string().max(16000), criteria: z.string().max(2000), notice: z.string().max(200) }).strict();
-const answerSchema = z.object({ key:z.string().regex(/^[a-zA-Z0-9_-]+$/), label:z.string().max(1000), type:z.string().max(80), required:z.boolean(), options:z.array(z.string().max(1000)).max(200), value:z.string().max(8000) }).strict();
+const answerSchema = z.object({ key:z.string().regex(/^[a-zA-Z0-9_-]+$/), label:z.string().max(1000), type:z.string().max(80), required:z.boolean(), options:z.array(z.string().max(1000)).max(200), value:z.string().max(8000), checkboxId:z.string().length(24).optional(), previousKey:z.string().max(80).optional(), links:z.array(z.string().url().startsWith('https://').max(2000)).max(12).optional() }).strict();
 const jobEdit = z.object({ revision:z.number().int(), employer:z.string().min(1).max(200), title:z.string().min(1).max(300), target:z.string().url(), letter:z.string().max(16000), answers:z.array(answerSchema).max(80), attachments:z.array(z.string().uuid()).max(10) }).strict();
 const fail = (message,status=400) => Object.assign(new Error(message),{status});
 const escape = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -79,7 +79,7 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
   app.use(express.json({ limit:'12mb' }));
   const getJob = (state,id) => { const job=state.jobs.find(j=>j.id===id); if(!job) throw fail('Bewerbung nicht gefunden.',404); return job; };
   const editable = state => { if(state.jobs.some(j=>j.status==='sending')) throw fail('Bitte den laufenden Versand abwarten.',409); };
-  const requiredMissing = job => job.answers.filter(a=>a.required&&!a.value.trim()).map(a=>a.label);
+  const requiredMissing = job => job.answers.filter(a=>a.required && (a.type==='checkbox'||a.type==='application-consent' ? a.value!=='Ja' : !a.value.trim())).map(a=>a.label);
 
   async function liveContext(source,start,cv,sample) {
     let listing,details;
@@ -98,7 +98,7 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
     if(!matchListings([listing],{cvText}).length) throw fail('Für diese Stelle fehlt ein fachlicher Bezug im aktuellen Lebenslauf.');
     if(sample&&!sampleText) throw fail('Das Muster enthält keinen lesbaren Text. Wähle eine PDF mit auswählbarem Text.');
     const {name,evidence,criteria,notice}=start.profile;
-    const context={profile:{name,evidence,criteria,notice},cvText,sampleText,template:sample?'':start.template,listing,questions:details.fields.filter(a=>a.type!=='checkbox'&&!['first_name','last_name','email','phone'].includes(a.key))};
+    const context={profile:{name,evidence,criteria,notice},cvText,sampleText,template:sample?'':start.template,listing,questions:details.fields.filter(a=>!['checkbox','application-consent'].includes(a.type)&&!['first_name','last_name','email','phone'].includes(a.key))};
     return {listing,details,context};
   }
   const newestDocument=kind=>store.documents().find(doc=>doc.kind===kind);
@@ -334,7 +334,7 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
         const profileAnswers=new Map([['first_name',name[0]],['last_name',name.slice(1).join(' ')],['email',start.profile.email],['phone',start.profile.phone]]);
         const candidates=new Map(draft.values.map(a=>[a.key,a.value]));
         const answers=details.fields.map(field=>{
-          const value=profileAnswers.get(field.key)??preferenceAnswer(field,start.preferences)??candidates.get(field.key)??'';
+          const value=field.value||(profileAnswers.get(field.key)??preferenceAnswer(field,start.preferences)??candidates.get(field.key)??'');
           return {...field,value:field.options.length&&!field.options.includes(value)?'':value};
         });
         const method=start.provider==='codex'?'Codex':nativeId?'Claude Code':'Claude · manueller Import';
@@ -421,7 +421,9 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
     const next=store.read(); const current=getJob(next,job.id);
     if(mode==='demo'&&result.status==='sent'&&!fixtures.get(job.id)?.receipt) { result.status='unknown';result.message='Die lokale Portalquittung fehlt.'; }
     if(result.status==='blocked' && result.fields?.length) {
-      const merged=answerSchema.array().max(80).safeParse([...current.answers,...result.fields]);
+      const remaining=current.answers.filter(answer=>!result.fields.some(field=>
+        field.key===answer.key||field.previousKey===answer.key||(field.checkboxId&&field.checkboxId===answer.checkboxId)));
+      const merged=answerSchema.array().max(80).safeParse([...remaining,...result.fields]);
       if(merged.success) {current.answers=merged.data.map(a=>({...a,value:a.value||preferenceAnswer(a,next.preferences)||''}));current.revision++;}
       else result.message='Die neuen Portalfragen überschreiten die unterstützten Formulargrenzen.';
     }
@@ -438,8 +440,9 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
     const job=getJob(store.read(),req.params.id);
     if(fixtureScenario==='captcha') return res.send('<div data-test="captcha">CAPTCHA erforderlich</div>');
     if(fixtureScenario==='login') return res.send('<label>Anmeldung<input type="password"></label>');
-    const fields=job.answers.map(a=>`<label>${escape(a.label)}<input name="${escape(a.key)}" ${a.required?'required':''}></label>`).join('');
-    const extra=fixtureScenario==='required'?'<label>Neue Pflichtfrage<input required name="new_required"></label>':'';
+    const fields=job.answers.filter(a=>!a.checkboxId).map(a=>`<label>${escape(a.label)}<input name="${escape(a.key)}" ${a.required?'required':''}></label>`).join('');
+    let extra=fixtureScenario==='required'?'<label>Neue Pflichtfrage<input required name="new_required"></label>':'';
+    if(fixtureScenario==='terms') extra='<label><input type="checkbox" name="terms" required>Ich akzeptiere die AGB der Beispielbewerbung</label><label><input type="checkbox" name="pool" checked>In den Talentpool aufnehmen</label>';
     res.send(`<!doctype html><html lang="de"><head><title>Nordstern · Lokales Testportal</title><link rel="stylesheet" href="/portal.css"></head><body><main><p>Lokales Testportal · ausschließlich fiktive Daten</p><h1>${escape(demoListing.employer)}</h1><h2>${escape(job.title)}</h2><form method="post" enctype="multipart/form-data">${fields}${extra}<label>Lebenslauf<input name="resume" type="file" required></label><label>Anschreiben<input name="cover_letter" type="file" required></label><input type="hidden" name="delivery_token"><button type="submit">Bewerbung absenden</button></form></main></body></html>`);
   });
   app.post('/test-portal/:id',(req,res) => {
@@ -461,7 +464,8 @@ export function createApp({ dataDir, mode='demo', headless=mode==='demo', fixtur
       if(res.headersSent) return;
       const job=getJob(store.read(),req.params.id);
       const expected=job.attachments.map(id=>store.document(id));
-      if(invalid||job.status!=='sending'||fixture.receipt||fields.delivery_token!==fixture.token||expected.some(doc=>uploads[doc.kind==='cv'?'resume':'cover_letter']!==doc.hash)||job.answers.some(a=>fields[a.key]!==a.value)) return res.status(403).send('Unterlagen oder Antworten stimmen nicht mit der Freigabe überein.');
+      const wrongConsent=fixtureScenario==='terms'&&(fields.terms!=='on'||fields.pool!==undefined);
+      if(invalid||wrongConsent||job.status!=='sending'||fixture.receipt||fields.delivery_token!==fixture.token||expected.some(doc=>uploads[doc.kind==='cv'?'resume':'cover_letter']!==doc.hash)||job.answers.some(a=>!a.checkboxId&&fields[a.key]!==a.value)) return res.status(403).send('Unterlagen oder Antworten stimmen nicht mit der Freigabe überein.');
       fixture.received++;
       fixture.receipt=randomUUID();
       if(fixtureScenario==='unclear') return res.status(502).send('Der Vorgang konnte nicht eindeutig bestätigt werden.');

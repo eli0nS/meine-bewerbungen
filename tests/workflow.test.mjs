@@ -98,6 +98,31 @@ for(const scenario of ['captcha','login','required','unclear'])test(`Portal ${sc
   }finally{await env.close();}
 });
 
+test('New mandatory terms appear in the dashboard and the approved send sets only the terms checkbox',async()=>{
+  const env=await setup('terms');
+  const browser=await chromium.launch();
+  try {
+    const id=await env.prepared();
+    assert.equal((await env.approve(id)).status,200);
+    assert.equal((await env.request(`/jobs/${id}/send`)).body.status,'blocked');
+    assert.equal(env.runtime.fixtures.get(id).received,0);
+    assert.equal((await env.request(`/jobs/${id}/send`)).status,409);
+
+    const page=await browser.newPage();
+    await page.goto(env.base);
+    await page.getByRole('button',{name:'Bewerbung prüfen',exact:true}).click();
+    await page.getByRole('button',{name:/Prüfen & freigeben/}).click();
+    const dialog=page.getByRole('dialog');
+    await dialog.getByText('Ich akzeptiere die AGB der Beispielbewerbung',{exact:true}).waitFor();
+    await dialog.getByText('Wird akzeptiert',{exact:true}).waitFor();
+    await dialog.getByRole('checkbox',{name:/Pflichtbedingungen im Portal zu akzeptieren/}).check();
+    await dialog.getByRole('button',{name:'Diese Fassung freigeben'}).click();
+    await page.getByRole('button',{name:/Freigegebene Bewerbung absenden/}).click();
+    await page.getByText('Der Eingang wurde vom Portal bestätigt.').waitFor();
+    assert.equal(env.runtime.fixtures.get(id).received,1);
+  }finally{await browser.close();await env.close();}
+});
+
 test('Missing answers, changed answers, foreign targets and request origins fail closed',async()=>{
   const env=await setup();
   try{

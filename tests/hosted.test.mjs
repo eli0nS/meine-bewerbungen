@@ -34,19 +34,24 @@ for(const [name,url] of providers) test(name+' fills a fictional application, up
     const docs=[{name:'cv.pdf',kind:'cv',bytes:cv},{name:'brief.pdf',kind:'letter',bytes:letter}];
     const docsMarkup='<label>Upload Lebenslauf<input type=file name="documents.cv"></label><label>Upload Andere<input type=file name="documents.other"></label>';
     const contact='<label>Vorname<input name="first_name" required></label><label>E-Mail<input type=email name=email required></label>';
-    const consent='<label>Einwilligung zur Bewerbung<input type=checkbox required></label>';
+    const consent='<label>Ich akzeptiere die <a href="/terms">AGB</a><input type=checkbox name=terms required></label><label>Newsletter<input type=checkbox name=newsletter checked></label>';
     const multi=name==='JOIN';
     const finalButton='<button type="submit">Bewerbung senden</button>';
     await page.route('**/*',async route=>{
       const req=route.request();
       if(req.url()===portal.apply && req.method()==='GET')return route.fulfill({contentType:'text/html',body:'<main><form enctype="multipart/form-data" method="POST">'+contact+consent+
-        (multi?'<button type="button" onclick="location.href=location.pathname+\'/documents\'">Weiter</button>':docsMarkup+finalButton)+'</form></main>'});
+        (multi?'<button type="button" onclick="if(this.form.terms.checked&&!this.form.newsletter.checked)location.href=location.pathname+\'/documents\'">Weiter</button>':docsMarkup+finalButton)+'</form></main>'});
       if(multi&&req.url()===portal.apply+'/documents'&&req.method()==='GET')
         return route.fulfill({contentType:'text/html',body:'<form method="post" enctype="multipart/form-data">'+docsMarkup+finalButton+'</form>'});
       if(req.method()==='POST'&&req.url().startsWith(portal.apply)){
         const body=req.postDataBuffer();
         assert.ok(body.includes(cv)&&body.includes(letter));
-        if(!multi) {assert.ok(body.includes(Buffer.from('Mira')));assert.ok(body.includes(Buffer.from('mira@example.invalid')));}
+        if(!multi) {
+          assert.ok(body.includes(Buffer.from('Mira')));
+          assert.ok(body.includes(Buffer.from('mira@example.invalid')));
+          assert.match(body.toString(),/name="terms"\r\n\r\non\r\n/);
+          assert.doesNotMatch(body.toString(),/name="newsletter"/);
+        }
         submitted++;
         return route.fulfill({contentType:'text/html',body:'<main>Thank you for applying.</main>'});
       }
@@ -59,7 +64,17 @@ for(const [name,url] of providers) test(name+' fills a fictional application, up
     assert.equal(unseen.status,'blocked');
     assert.equal(await page.locator('input[name=first_name]').inputValue(),'');
     assert.equal(submitted,0);
-    job.answers.push({...unseen.fields[0],value:'Ja'});
+    assert.equal(unseen.fields[0].type,'application-consent');
+    assert.equal(unseen.fields[0].value,'Ja');
+    assert.deepEqual(unseen.fields[0].links,[new URL('/terms',portal.apply).href]);
+    job.answers.push(unseen.fields[0]);
+    const termsLink=page.getByRole('link',{name:'AGB'});
+    await termsLink.evaluate(link=>link.setAttribute('href','/new-terms'));
+    const changed=await hostedStep(page,job,docs,new Set());
+    assert.equal(changed.status,'blocked');
+    assert.notEqual(changed.fields[0].key,job.answers.at(-1).key);
+    assert.equal(await page.locator('[name=terms]').isChecked(),false);
+    await termsLink.evaluate(link=>link.setAttribute('href','/terms'));
     const result=await submitHosted(page,job,docs,{portal,headless:true,onSubmit:()=>{approvedClicks++;}});
     assert.equal(result.status,'sent',JSON.stringify(result));
     assert.equal(submitted,1);

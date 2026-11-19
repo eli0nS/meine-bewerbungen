@@ -78,6 +78,8 @@ Bei Personio, JOIN, Lever und Teamtailor hängt der Versand vom konkreten Firmen
 
 Beim unterstützten Portal klickst du auf **Prüfen & freigeben**. Im Dialog siehst du die konkrete Stelle, Antworten und Dateien. Öffne beide PDFs. Wenn alles stimmt, setze das Häkchen und wähle **Diese Fassung freigeben**. Erst **Freigegebene Bewerbung absenden** löst den Portalversand aus.
 
+Erkannte Pflicht-AGB und Datenschutzhinweise stehen mit ihrem Wortlaut in der Freigabe. Wenn die Freigabe sie nennt, setzt die App die zugehörigen Häkchen beim Versand. Freiwillige Einwilligungen wie Newsletter oder Talentpool bleiben ohne deine Auswahl frei. Findet die App neue oder geänderte Pflichtbedingungen, zeigt sie die aktualisierte Fassung zur Freigabe an.
+
 ![Freigabedialog für eine einzelne fiktive Bewerbung](../web/anleitung-bilder/freigabe.png)
 
 Bei **Bestätigt versandt** kannst du die Portalquittung öffnen. Bei **Angehalten** liest du den Grund im Entwurf. Bei **Ausgang unklar** prüfst du den Eingang im Portal oder Postfach. Die App löst in diesem Zustand keinen zweiten Versuch aus.

@@ -6,6 +6,8 @@ Der Schreibagent analysiert zuerst die Aufgaben der Anzeige und wählt belegte E
 
 Die Prüfung zeigt Arbeitgeber, genaue Stelle, Portal, Antworten und Anlagen. Der Server bindet die Freigabe an deren SHA-256-Fassung und die Versionsnummer. Jede Änderung hebt die Freigabe auf. Der Versand startet erst nach dieser konkreten Freigabe. Vorher werden weder Kontaktdaten noch Dokumente an ein Bewerbungsportal übertragen.
 
+Bei eindeutig erkannten Pflicht-AGB oder Datenschutzhinweisen zeigt die Freigabe den Formulartext und vorhandene Links. Die App setzt die Häkchen nach der Freigabe. Ändern sich Formulartext, Link oder Feldwert, muss die neue Fassung geprüft werden. Freiwillige Kontrollkästchen werden ohne ausdrückliche Auswahl abgewählt.
+
 Fehlende Pflichtangaben, Login und CAPTCHA führen zum Status „Angehalten“. Nach einem möglichen Absendeversuch ohne sichtbare Portalbestätigung gilt „Ausgang unklar“. Solche Vorgänge bleiben gesperrt und erfordern eine Prüfung außerhalb des automatischen Versands. Ein Neustart macht unterbrochene Versandvorgänge ebenfalls unklar. Nur eine vom Adapter erkannte Portalbestätigung ergibt „Bestätigt versandt“.
 
 Der Demomodus akzeptiert ausschließlich das lokale Testportal. Er nutzt fiktive Daten und deterministische Entwürfe. Reale Portale und KI-Aufrufe sind dort technisch gesperrt.

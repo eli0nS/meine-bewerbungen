@@ -1,4 +1,5 @@
 import { hostedPortal, submitHosted, hostedStep, contactFields } from './hosted-portals.mjs';
+import { inspectCheckboxes, checkboxBlocked, checkboxReview } from './portal-checkboxes.mjs';
 import { chromium } from 'playwright';
 import { jobTarget } from './search.mjs';
 import { digest } from './store.mjs';
@@ -40,7 +41,7 @@ export async function publicFormFields(portal) {
     const page=await browser.newPage({javaScriptEnabled:false,serviceWorkers:'block'});
     await page.route('**/*',route=>route.abort());
     await page.setContent(html,{waitUntil:'domcontentloaded',timeout:5000});
-    const markup=await hostedStep(page,{answers:contacts},[],new Set(),true);
+    const markup=await hostedStep(page,{answers:contacts},[],new Set(),true,false,portal.apply);
     return contacts.concat(markup?.fields||[]).slice(0,80);
   } catch {return contacts;} finally {await browser?.close();}
 }
@@ -86,7 +87,15 @@ export async function deliver({ job, documents, mode, base, headless, fixtureTok
     if (new URL(page.url()).origin !== target.origin || new URL(page.url()).pathname !== target.pathname) throw new Error('Das Portal hat auf ein anderes Ziel umgeleitet.');
     let reason = await blocker(page);
     if (reason) return { status: 'blocked', message: reason };
+    const submit = page.getByRole('button', { name: /^(Submit application|Bewerbung absenden|Bewerbung senden)$/i });
+    if (await submit.count()!==1||!await submit.isVisible()) return { status: 'blocked', message: 'Die konkrete Absendeaktion wurde nicht eindeutig erkannt.' };
+    const form = page.locator('form').filter({has:submit});
+    const consentScope = await form.count()===1 ? form : page.locator('main').first();
+    const checkboxes = await inspectCheckboxes(consentScope,job.answers,page.url());
+    if (checkboxes.message) return checkboxBlocked(checkboxes.message);
+    if (checkboxes.fields.length) return checkboxReview(checkboxes.fields);
     for (const answer of job.answers) {
+      if (answer.type==='application-consent'||answer.type==='checkbox') continue;
       if (!answer.value.trim()) continue;
       let field = page.locator(`[name="${answer.key}"]`);
       if (!await field.count()) field = page.getByLabel(answer.label, { exact: true });
@@ -104,15 +113,15 @@ export async function deliver({ job, documents, mode, base, headless, fixtureTok
       if (await field.count()!==1) return { status: 'blocked', message: `Der freigegebene Upload für „${document.name}“ ist nicht eindeutig verfügbar.` };
       await field.setInputFiles({ name: document.name, mimeType: 'application/pdf', buffer: Buffer.from(document.bytes) });
     }
+    const finalCheckboxes = await inspectCheckboxes(consentScope,job.answers,page.url());
+    if (finalCheckboxes.message) return checkboxBlocked(finalCheckboxes.message);
+    if (finalCheckboxes.fields.length) return checkboxReview(finalCheckboxes.fields);
+    for (const apply of finalCheckboxes.actions) await apply();
     const remaining = await page.locator('input[required], textarea[required], select[required]').evaluateAll(elements => elements.filter(el => !el.checkValidity()).map(el => el.name || el.id));
     if (remaining.length) return { status: 'blocked', message: `Weitere Pflichtfelder sind offen: ${remaining.join(', ')}.` };
     reason = await blocker(page);
     if (reason) return { status: 'blocked', message: reason };
-    // Never silently accept newly appearing contracts or consent checkboxes.
-    if (await page.locator('input[type="checkbox"]:not(:checked)').count()) return { status: 'blocked', message: 'Das Formular enthält eine gesondert zu prüfende Einwilligung.' };
     if (mode === 'demo') await page.locator('[name="delivery_token"]').evaluate((element, token) => { element.value = token; }, fixtureToken);
-    const submit = page.getByRole('button', { name: /^(Submit application|Bewerbung absenden|Bewerbung senden)$/i });
-    if (await submit.count()!==1||!await submit.isVisible()) return { status: 'blocked', message: 'Die konkrete Absendeaktion wurde nicht eindeutig erkannt.' };
     const formAction=await submit.evaluate(element=>element.getAttribute('formaction')||element.form?.action||location.href);
     if(new URL(formAction,page.url()).origin!==target.origin) return {status:'blocked',message:'Das Formular verweist auf ein anderes Versandziel.'};
     await onSubmit();

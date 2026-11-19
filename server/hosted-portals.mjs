@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { inspectCheckboxes, checkboxReview } from './portal-checkboxes.mjs';
 
 // Only official, job-specific hosted URLs can be promoted from a research result.
 export function hostedPortal(raw) {
@@ -36,11 +37,11 @@ function contactKey(el) {
 
 // Read only the controls of the active application step. Stable question keys bind
 // the visible wording and choices to the answer approved in the local dashboard.
-export async function hostedStep(page,job,documents,uploaded,inspectOnly=false,finalStep=false) {
+export async function hostedStep(page,job,documents,uploaded,inspectOnly=false,finalStep=false,address=page.url()) {
   const forms=page.locator('form').filter({has:page.locator('input[type=file],input[type=email],textarea,input[name=first_name]')});
   if(await forms.count()>1) return {status:'blocked',message:'Mehrere mögliche Bewerbungsformulare auf der Seite.'};
   const scope=await forms.count()===1?forms:page.locator('main').first();
-  const controls=scope.locator('input,textarea,select');
+  const controls=scope.locator('input:not([type=checkbox]),textarea,select');
   const fields=await controls.evaluateAll(nodes=>nodes.map((e,index)=>{
     if(e.disabled||e.getAttribute('aria-hidden')==='true'||['hidden','submit','button','reset','search'].includes(e.type)) return null;
     if(e.type!=='file'&&!e.getClientRects().length) return null;
@@ -53,8 +54,10 @@ export async function hostedStep(page,job,documents,uploaded,inspectOnly=false,f
       checked:e.checked,populated:Boolean(e.value),role:e.getAttribute('role')};
   }).filter(Boolean));
   const answers=new Map(job.answers.map(a=>[a.key,a]));
-  const additions=[],actions=[],seen=new Set(),fileKinds=new Set();
   const stop=message=>({status:'blocked',message});
+  const checkboxes=await inspectCheckboxes(scope,job.answers,address,inspectOnly);
+  if(checkboxes.message) return stop(checkboxes.message);
+  const additions=[...checkboxes.fields],actions=[...checkboxes.actions],seen=new Set(),fileKinds=new Set();
   for(const el of fields) {
     const field=controls.nth(el.index);
     if(el.type==='file') {
@@ -101,13 +104,13 @@ export async function hostedStep(page,job,documents,uploaded,inspectOnly=false,f
       if(el.required||el.populated||el.type==='password') return stop('Dieses Formular enthält eine Anmeldung oder eine nicht eindeutig zuordenbare Auswahl.');
       continue;
     }
-    if(!['text','email','tel','url','number','textarea','checkbox','select-one','date'].includes(el.type)) {
+    if(!['text','email','tel','url','number','textarea','select-one','date'].includes(el.type)) {
       if(el.required||el.populated) return stop('Ein Pflichtfeld benötigt eine persönliche Prüfung.');
       continue;
     }
     if(!el.label&&!el.name) {if(el.required||el.populated)return stop('Ein Feld ist nicht beschriftet.');continue;}
     const label=el.label||el.name;
-    const options=el.type==='checkbox'?['Ja','Nein']:el.options;
+    const options=el.options;
     if(label.length>1000||options.length>200||options.some(o=>o.length>1000)) return stop('Die Portalfrage ist zu umfangreich für die lokale Freigabe.');
     if(el.type==='textarea'&&/^(cover letter|anschreiben|bewerbungsschreiben)\s*\*?$/i.test(label)) {
       if(!inspectOnly) actions.push(()=>field.fill(job.letter));
@@ -126,20 +129,21 @@ export async function hostedStep(page,job,documents,uploaded,inspectOnly=false,f
     if(inspectOnly) continue;
     if(!value) {
       if(el.required) return stop('Bitte unter Antworten ergänzen: '+label);
-      if(el.populated&&el.type!=='checkbox'||el.checked) return stop('Das Portal hat eine ungeprüfte Antwort vorbelegt: '+label);
+      if(el.populated||el.checked) return stop('Das Portal hat eine ungeprüfte Antwort vorbelegt: '+label);
       continue;
     }
-    if(el.type==='checkbox') {
-      if(el.required&&value!=='Ja') return stop('Die erforderliche Einwilligung ist nicht freigegeben: '+label);
-      actions.push(()=>field.setChecked(value==='Ja'));
-    } else if(el.type==='select-one') actions.push(()=>field.selectOption({label:value}));
+    if(el.type==='select-one') actions.push(()=>field.selectOption({label:value}));
     else actions.push(()=>field.fill(value));
   }
   if(inspectOnly) return {fields:additions};
-  if(additions.length) return {...stop('Neue Portalfragen liegen unter Antworten. Bitte prüfe die ergänzte Fassung.'),fields:additions};
+  if(additions.length) return checkboxReview(additions);
   if(finalStep && ['cv','letter'].some(kind=>!fileKinds.has(kind)&&!uploaded.has(kind)))
     return stop('Das Portal bietet keine eindeutigen Uploadfelder für beide freigegebenen PDFs.');
   for(const run of actions) await run();
+  const finalCheckboxes=await inspectCheckboxes(scope,job.answers,address);
+  if(finalCheckboxes.message) return stop(finalCheckboxes.message);
+  if(finalCheckboxes.fields.length) return checkboxReview(finalCheckboxes.fields);
+  for(const apply of finalCheckboxes.actions) await apply();
   return null;
 }
 
